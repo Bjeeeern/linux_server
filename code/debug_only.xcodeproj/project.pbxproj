@@ -7,14 +7,18 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		B889524E1CA74A2200DBD084 /* code */ = {isa = PBXFileReference; lastKnownFileType = folder; path = code; sourceTree = SOURCE_ROOT; };
+		B851613D1E92F847003E085F /* handmade.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = handmade.h; sourceTree = "<group>"; };
+		B851613E1E92F847003E085F /* unix_platform.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = unix_platform.cpp; sourceTree = "<group>"; };
+		B851613F1E92F847003E085F /* web_server.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = web_server.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		B87861EA1AB43C8100581B72 = {
 			isa = PBXGroup;
 			children = (
-				B889524E1CA74A2200DBD084 /* code */,
+				B851613D1E92F847003E085F /* handmade.h */,
+				B851613E1E92F847003E085F /* unix_platform.cpp */,
+				B851613F1E92F847003E085F /* web_server.cpp */,
 			);
 			sourceTree = "<group>";
 		};

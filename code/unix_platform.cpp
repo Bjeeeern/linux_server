@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -7,19 +8,28 @@
 
 s32 main()
 {
-  int FileDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-  if(FileDescriptor != -1)
+  s32 SocketHandle = socket(AF_INET, SOCK_STREAM, 0);
+  if(SocketHandle != -1)
   {
     struct sockaddr_in Address = {};
     //TODO(bjorn): Read this from a settings text file.
     Address.sin_family = AF_INET;
-    Address.sin_port = 8000;
+    Address.sin_port = htons(8000);
     Address.sin_addr.s_addr = INADDR_ANY;
-    if(bind(FileDescriptor, (struct sockaddr *)&Address, sizeof(sockaddr)) == 0)
+    if(bind(SocketHandle, (struct sockaddr *)&Address, sizeof(Address)) == 0)
     {
-      if(listen(FileDescriptor, 10) == 0)
+      if(listen(SocketHandle, 10) == 0)
       {
-
+        while(true)
+        {
+          struct sockaddr_in ClientAddress = {};
+          socklen_t ClientAddressLenght = sizeof(ClientAddress);
+          while(accept(SocketHandle, (struct sockaddr *)&ClientAddress, &ClientAddressLenght) == -1)
+          {
+            usleep(1000);
+          }
+          
+        }
       }
       else
       {

@@ -22,14 +22,14 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "/Users/kuma/Desktop/myProjects/KumaEngine/build"
+      customWorkingDirectory = "/Users/kuma/Desktop/myProjects/linux_server"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
       <PathRunnable
          runnableDebuggingMode = "0"
-         FilePath = "/Users/kuma/Desktop/myProjects/KumaEngine/build/game.app">
+         FilePath = "/Users/kuma/Desktop/myProjects/linux_server/build/server">
       </PathRunnable>
       <AdditionalOptions>
          <AdditionalOption

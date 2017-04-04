@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "B229B12271FAA4CD5BBDD89D4290D1F8A64581AD",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "580319EF136002F0691A0324A507CAB0A9DE0B10" : 9223372036854775807,
+    "B229B12271FAA4CD5BBDD89D4290D1F8A64581AD" : 9223372036854775807
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "E8A43D55-A76A-41C4-83B8-26F07B4EF537",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "580319EF136002F0691A0324A507CAB0A9DE0B10" : "",
+    "B229B12271FAA4CD5BBDD89D4290D1F8A64581AD" : "linux_server\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "debug_only",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "code\/debug_only.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Bjeeeern\/enviroment",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "580319EF136002F0691A0324A507CAB0A9DE0B10"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Bjeeeern\/linux_server.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "B229B12271FAA4CD5BBDD89D4290D1F8A64581AD"
+    }
+  ]
+}
