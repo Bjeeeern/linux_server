@@ -1,1 +1,4 @@
 build/*
+**.xcuserstate
+**.DS_Store
+**.xcbkptlist
