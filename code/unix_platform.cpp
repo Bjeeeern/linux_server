@@ -8,7 +8,7 @@
 
 #include "handmade.h"
 
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 1024
 
 s32 main()
 {
@@ -45,11 +45,10 @@ s32 main()
 						int BytesRecieved = -1;
 						while(BytesRecieved != 0)
 						{
-							BytesRecieved = recv(ClientSocketHandle, (void *)Buffer, BUFFER_SIZE, 0);
+							BytesRecieved = recv(ClientSocketHandle, (void *)Buffer, BUFFER_SIZE-1, 0);
 							if(BytesRecieved > 0)
 							{
-								Buffer[BUFFER_SIZE-1] = '\0';
-								printf("Received data [%s]\n",Buffer);
+								printf("[-[-[%s]-]-]\n",Buffer);
 							}
 							usleep(1000);
 						}
