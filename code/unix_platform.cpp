@@ -10,7 +10,13 @@
 
 #define BUFFER_SIZE Kilobytes(8)
 
-typedef s32* str;
+struct str_unit
+{
+	s32 size;
+	char *str;
+};
+
+typedef str_unit* str
 
 global_variable char * GlobalInternalMemory
 
