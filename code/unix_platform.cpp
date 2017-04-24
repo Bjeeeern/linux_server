@@ -8,10 +8,23 @@
 
 #include "handmade.h"
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE Kilobytes(8)
+
+typedef s32* str;
+
+global_variable char * GlobalInternalMemory
+
+internal_function str
+Str(char *CString)
+{
+	str Return = 0;
+
+	return Return;
+}
 
 s32 main()
 {
+	str A = Str("Hej hej hej");
 	s32 SocketHandle = socket(AF_INET, SOCK_STREAM, 0);
 	if(SocketHandle != -1)
 	{
