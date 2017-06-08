@@ -8,29 +8,10 @@
 
 #include "handmade.h"
 
-#define BUFFER_SIZE Kilobytes(8)
-
-struct str_unit
-{
-	s32 size;
-	char *str;
-};
-
-typedef str_unit* str
-
-global_variable char * GlobalInternalMemory
-
-internal_function str
-Str(char *CString)
-{
-	str Return = 0;
-
-	return Return;
-}
+#define BUFFER_SIZE Kilobytes(64)
 
 s32 main()
 {
-	str A = Str("Hej hej hej");
 	s32 SocketHandle = socket(AF_INET, SOCK_STREAM, 0);
 	if(SocketHandle != -1)
 	{
@@ -57,7 +38,7 @@ s32 main()
 							ClientSocketHandle = accept(SocketHandle, 
 																					(struct sockaddr *)&ClientAddress, 
 																					&ClientAddressLenght);
-							usleep(1000);
+							usleep(16000);
 						}
 
 						char Buffer[BUFFER_SIZE] = {};
@@ -67,9 +48,10 @@ s32 main()
 							BytesRecieved = recv(ClientSocketHandle, (void *)Buffer, BUFFER_SIZE-1, 0);
 							if(BytesRecieved > 0)
 							{
-								printf("[-[-[%s]-]-]\n",Buffer);
+								printf("[-[-[\n%s]-]-]\n",Buffer);
+								write(ClientSocketHandle, "HTTP/1.1 200 OK\nContent-Length: 52\nContent-Type: text/html; charset=utf-8\n\n<html>\n<body>\n<h1>Hello, World!</h1>\n</body>\n</html>", 127);
 							}
-							usleep(1000);
+							usleep(16000);
 						}
 						printf("Connection ended correctly\n");
 					}
