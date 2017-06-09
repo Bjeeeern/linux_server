@@ -10,7 +10,23 @@
 
 #define BUFFER_SIZE Kilobytes(64)
 
-s32 main()
+internal_function void
+handle_request_through_fork(s32 client_socket_handle, u8 *data_received, s32 length_of_data)
+{
+	write(client_socket_handle, 
+				"HTTP/1.1 200 OK\n"
+				"Content-Length: 52\n"
+				"Content-Type: text/html; charset=utf-8\n"
+				"\n"
+				"<html>\n"
+				"<body>\n"
+				"<h1>Hello, World!</h1>\n"
+				"</body>\n"
+				"</html>", 127);
+}
+
+	s32 
+main()
 {
 	s32 SocketHandle = socket(AF_INET, SOCK_STREAM, 0);
 	if(SocketHandle != -1)
@@ -32,24 +48,47 @@ s32 main()
 					{
 						struct sockaddr_in ClientAddress = {};
 						socklen_t ClientAddressLenght = sizeof(ClientAddress);
-						int ClientSocketHandle = -1;
-						while(ClientSocketHandle == -1)
+						int client_socket_handle = -1;
+						while(client_socket_handle == -1)
 						{
-							ClientSocketHandle = accept(SocketHandle, 
-																					(struct sockaddr *)&ClientAddress, 
-																					&ClientAddressLenght);
+							client_socket_handle = accept(SocketHandle, 
+																						(struct sockaddr *)&ClientAddress, 
+																						&ClientAddressLenght);
 							usleep(16000);
 						}
 
-						char Buffer[BUFFER_SIZE] = {};
-						int BytesRecieved = -1;
-						while(BytesRecieved != 0)
+						u8 buffer[BUFFER_SIZE] = {};
+						int bytes_received = -1;
+						while(bytes_received != 0)
 						{
-							BytesRecieved = recv(ClientSocketHandle, (void *)Buffer, BUFFER_SIZE-1, 0);
-							if(BytesRecieved > 0)
+							bytes_received = recv(client_socket_handle, 
+																		(void *)buffer, BUFFER_SIZE-1, 0);
+							if(bytes_received > 0)
 							{
-								printf("[-[-[\n%s]-]-]\n",Buffer);
-								write(ClientSocketHandle, "HTTP/1.1 200 OK\nContent-Length: 52\nContent-Type: text/html; charset=utf-8\n\n<html>\n<body>\n<h1>Hello, World!</h1>\n</body>\n</html>", 127);
+								u8* data_recieved_from_client = (u8*)mmap(0, bytes_received + 1,
+																															PROT_READ | PROT_WRITE,
+																															MAP_PRIVATE 
+																															| MAP_ANONYMOUS,
+																															-1, 0);
+								for(s32 byte_index = 0;
+										byte_index < bytes_received;
+										++byte_index)
+								{
+									data_recieved_from_client[byte_index] = buffer[byte_index];
+								}
+								data_recieved_from_client[bytes_received] = '\0';
+
+								if(fork())
+								{
+									printf("[-[-[\n%s]-]-]\n", data_recieved_from_client);
+								}
+								else
+								{
+									handle_request_through_fork(client_socket_handle, 
+																							data_recieved_from_client, 
+																							bytes_received + 1);
+									_exit(0);
+								}
 							}
 							usleep(16000);
 						}
