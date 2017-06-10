@@ -3,15 +3,7 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "-[KumaEngineOpenGLView drawRect:]:main.mm">
-         <PersistentStrings>
-            <PersistentString
-               value = "self.frame.size">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "-[KumaEngineOpenGLView init]:main.mm">
+         contextName = "-[KumaEngineOpenGLView prepareOpenGL]:main.mm">
          <PersistentStrings>
             <PersistentString
                value = "self.frame.size">
@@ -22,10 +14,21 @@
          contextName = "SDL_output_sound(sdl_audio_ring_buffer*, game_sound_output_buffer, int, int):sdl_kumage.cpp">
       </ContextState>
       <ContextState
-         contextName = "-[KumaEngineOpenGLView prepareOpenGL]:main.mm">
+         contextName = "-[KumaEngineOpenGLView drawRect:]:main.mm">
          <PersistentStrings>
             <PersistentString
                value = "self.frame.size">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "get_string_between_tags(char*, char const*, char const*):unix_platform.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "string + start_index">
+            </PersistentString>
+            <PersistentString
+               value = "string + end_index">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -38,12 +41,23 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "-[KumaEngineOpenGLView init]:main.mm">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.frame.size">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "main:unix_platform.cpp">
          <PersistentStrings>
             <PersistentString
                value = "8000">
             </PersistentString>
          </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "handle_request_through_fork(int, void*, int):unix_platform.cpp">
       </ContextState>
    </ContextStates>
 </VariablesViewState>
