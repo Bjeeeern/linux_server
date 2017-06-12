@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 
 #include "handmade.h"
@@ -237,6 +238,7 @@ handle_request_through_fork(s32 client_socket_handle, void *data_received, s32 l
 			}
 			else if(string_does_contain_tag(absolute_request_path, ".ico"))
 			{
+				printf("favicon.ico sent!");
 			}
 			else
 			{
@@ -303,11 +305,15 @@ main()
 						int bytes_received = -1;
 						while(bytes_received != 0)
 						{
-							bytes_received = recv(client_socket_handle, (void *)buffer, BUFFER_SIZE-1, 0);
+							bytes_received = recv(client_socket_handle, 
+																		(void *)buffer, BUFFER_SIZE-1, 0);
 
 							if(bytes_received > 0)
 							{
 								s32 pid = fork();
+								//NOTE(bjorn): For thread debugging purposes.
+								//kill(0, SIGSTOP);
+
 								if(pid)
 								{
 									printf("[-[-[\n%s]-]-]\npid: %i\n", buffer, pid);

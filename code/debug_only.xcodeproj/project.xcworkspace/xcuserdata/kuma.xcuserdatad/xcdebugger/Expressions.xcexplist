@@ -11,6 +11,14 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "string_does_contain_tag(char*, char const*):unix_platform.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "diff_with_tag(string, tag)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "SDL_output_sound(sdl_audio_ring_buffer*, game_sound_output_buffer, int, int):sdl_kumage.cpp">
       </ContextState>
       <ContextState
@@ -57,7 +65,23 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "append_data_to_header(char*, void*, int):unix_platform.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "(string - 20)">
+            </PersistentString>
+            <PersistentString
+               value = "*(string)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "handle_request_through_fork(int, void*, int):unix_platform.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "(char*)file">
+            </PersistentString>
+         </PersistentStrings>
       </ContextState>
    </ContextStates>
 </VariablesViewState>
