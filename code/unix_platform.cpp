@@ -44,14 +44,22 @@ append_data_to_header(char *string, void *file, s32 size_of_file)
 }
 
 internal_function s32
-diff_with_tag(char *string, const char *tag)
+they_dont_differ(char *string, const char *tag)
 {
-	s32 diff = 0;
 	while(*tag != '\0')
 	{
-		diff += *tag++ - *string++;
+		s32 diff = *tag++ - *string++;
+		if(diff != 0)
+		{
+			return false;
+		}
 	}
-	return diff;
+	return true;
+}
+internal_function s32
+they_differ(char *string, const char *tag)
+{
+	return !they_dont_differ(string, tag);
 }
 
 internal_function s32
@@ -62,8 +70,7 @@ get_line_nr_at_tag(char *string, const char *tag)
 	{
 		if(*string == *tag)
 		{
-			s32 diff = diff_with_tag(string, tag);
-			if(diff == 0)
+			if(they_dont_differ(string, tag))
 			{
 				return line_nr;
 			}
@@ -97,11 +104,11 @@ internal_function char *
 get_string_between_tags(char *string, const char *pre, const char *post)
 {
 	s32 start_index = 0;
-	while(diff_with_tag(string + start_index++, pre) != 0){}
+	while(they_differ(string + start_index++, pre)){}
 	start_index += string_size(pre) - 1;
 
 	s32 end_index = start_index;
-	while(diff_with_tag(string + end_index++, post) != 0){}
+	while(they_differ(string + end_index++, post)){}
 	end_index -= 1;
 
 	s32 size_of_new_string = end_index - start_index;
@@ -124,8 +131,9 @@ get_string_between_tags(char *string, const char *pre, const char *post)
 internal_function b32
 string_does_contain_tag(char *string, const char *tag)
 {
-	while(diff_with_tag(string, tag) != 0)
+	while(they_differ(string, tag))
 	{
+		printf("\t\t%s\n", string);
 		if(*string++ == '\0')
 		{
 			return false;
@@ -224,9 +232,9 @@ KEEP_ALIVE:
 		{
 			append_to_string(absolute_path_to_webroot, "index.html");
 		}
+		munmap(GET_request_path, string_size(GET_request_path)+1);
 
 		char *absolute_request_path = absolute_path_to_webroot;
-		printf("\tAbsolute request path: %s\n\t[----\n", absolute_request_path);
 
 
 		s32 file_handle;
@@ -244,7 +252,10 @@ KEEP_ALIVE:
 				"HTTP/1.1 200 OK\n"
 				"Content-Length: ";
 
-			append_to_string(GET_response, int_to_string(size_of_file));
+			char *size_in_text = int_to_string(size_of_file);
+			append_to_string(GET_response, size_in_text);
+			munmap(size_in_text, string_size(size_in_text)+1);
+
 			append_to_string(GET_response, "\n");
 
 			if(string_does_contain_tag((char*)data_received, "keep-alive"))
@@ -256,6 +267,7 @@ KEEP_ALIVE:
 				append_to_string(GET_response, "Connection: close\n");
 			}
 
+		  printf("\tAbsolute request path: %s\n\t[----\n", absolute_request_path);
 			if(string_does_contain_tag(absolute_request_path, ".html"))
 			{
 				append_to_string(GET_response, "Content-Type: text/html; charset=utf-8\n");
@@ -263,6 +275,15 @@ KEEP_ALIVE:
 			else if(string_does_contain_tag(absolute_request_path, ".ico"))
 			{
 				append_to_string(GET_response, "Content-Type: image/ico\n");
+			}
+			else if(string_does_contain_tag(absolute_request_path, ".css"))
+			{
+				append_to_string(GET_response, "Content-Type: text/css; charset=utf-8\n");
+			}
+			else if(string_does_contain_tag(absolute_request_path, ".js"))
+			{
+				append_to_string(GET_response, 
+												 "Content-Type: application/javascript; charset=utf-8\n");
 			}
 			else
 			{
@@ -288,7 +309,7 @@ KEEP_ALIVE:
 		}
 		else
 		{
-			//TODO(bjorn): Log this.
+			//TODO(bjorn): 404 file not found!
 		}
 
 		if(string_does_contain_tag((char*)data_received, "keep-alive"))
