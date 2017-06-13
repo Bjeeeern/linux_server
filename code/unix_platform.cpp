@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -11,25 +12,8 @@
 #include "handmade.h"
 
 #define BUFFER_SIZE Kilobytes(64)
+#define SIMULTANEOUS_CONNECTIONS 16
 
-/*
-	s32 path_index = 0;
-	while(path_to_executable[path_index++] != '\0'){}
-
-	const char *relative_path_to_webroot = "../webroot";
-	char *absolute_path_to_webroot = path_to_executable;
-
-	s32 rel_index = 0;
-	while(relative_path_to_webroot[rel_index] != '\0')
-	{
-		absolute_path_to_webroot[path_index++] = absolute_path_to_webroot[rel_index++];
-	}
-
-	u8* index_html = (u8*)mmap(0, bytes_received + 1,
-																						PROT_READ | PROT_WRITE,
-																						MAP_PRIVATE | MAP_ANONYMOUS,
-																						-1, 0); 
-*/
 internal_function void append_to_string(char *string, char *appendix)
 {
 	while(*string++ != '\0'){}
@@ -187,17 +171,48 @@ int_to_string(s32 number)
 }
 
 internal_function void
-handle_request_through_fork(s32 client_socket_handle, void *data_received, s32 length_of_data)
+handle_request_through_fork(s32 client_socket_handle)
 {
+	s32 pid = getpid();
+
+KEEP_ALIVE:
+	s32 bytes_in_queue = 0;
+	f32 seconds_waited = 0.0f;
+	while(bytes_in_queue == 0)
+	{
+		ioctl(client_socket_handle, FIONREAD, &bytes_in_queue);
+		if(bytes_in_queue == 0)
+		{
+			usleep(16000);
+			seconds_waited += 0.0167;
+			if(seconds_waited > 10.0f)
+			{
+				return;
+			}
+		}
+	}
+
+	u8* data_received = (u8*)mmap(0, bytes_in_queue + 1,
+																PROT_READ | PROT_WRITE,
+																MAP_PRIVATE | MAP_ANONYMOUS,
+																-1, 0);
+
+	s32 bytes_received = recv(client_socket_handle, (void *)data_received, 
+												bytes_in_queue, 0);
+	//NOTE(bjorn): Make it a string so i can use it with my string functions.
+	data_received[bytes_in_queue] = '\0';
+
+	Assert(bytes_in_queue == bytes_received);
+
+	printf("\t[----received message\n%.*s\n\t[----\n\tpid: %i\n\t[----\n", 
+				 bytes_received, data_received, pid);
+
+
 	char path_to_executable[1024] = {};
 	getcwd(path_to_executable, sizeof(path_to_executable));
 
-	printf("Current working dir: %s\n", path_to_executable);
-
 	append_to_string(path_to_executable, "/../webroot");
 	char *absolute_path_to_webroot = path_to_executable;
-
-	printf("Absolute path to webroot: %s\n", absolute_path_to_webroot);
 
 	if(get_line_nr_at_tag((char *)data_received, "GET") == 0)
 	{
@@ -211,9 +226,9 @@ handle_request_through_fork(s32 client_socket_handle, void *data_received, s32 l
 		}
 
 		char *absolute_request_path = absolute_path_to_webroot;
-		printf("Absolute request path: %s\n", absolute_request_path);
+		printf("\tAbsolute request path: %s\n\t[----\n", absolute_request_path);
 
-		//load the file into memor
+
 		s32 file_handle;
 		struct stat file_stats;
 
@@ -232,13 +247,22 @@ handle_request_through_fork(s32 client_socket_handle, void *data_received, s32 l
 			append_to_string(GET_response, int_to_string(size_of_file));
 			append_to_string(GET_response, "\n");
 
+			if(string_does_contain_tag((char*)data_received, "keep-alive"))
+			{
+				append_to_string(GET_response, "Connection: keep-alive\n");
+			}
+			else
+			{
+				append_to_string(GET_response, "Connection: close\n");
+			}
+
 			if(string_does_contain_tag(absolute_request_path, ".html"))
 			{
 				append_to_string(GET_response, "Content-Type: text/html; charset=utf-8\n");
 			}
 			else if(string_does_contain_tag(absolute_request_path, ".ico"))
 			{
-				printf("favicon.ico sent!");
+				append_to_string(GET_response, "Content-Type: image/ico\n");
 			}
 			else
 			{
@@ -246,21 +270,31 @@ handle_request_through_fork(s32 client_socket_handle, void *data_received, s32 l
 			}
 			append_to_string(GET_response, "\n");
 
-			s32 size_of_response_header = 0;
-			while(GET_response[size_of_response_header++] != 0){}
-			size_of_response_header -= 1;
+			s32 size_of_response_header = string_size(GET_response);
 
-			append_data_to_header(GET_response, file, size_of_file);
+			write(client_socket_handle, GET_response, size_of_response_header);
 
+			printf("\tGET response:\n%s\n", GET_response);
 			if(string_does_contain_tag(absolute_request_path, ".html"))
 			{
-				printf("GET response: %s\n", GET_response);
+				printf("\tGET response html content:\n%.*s\n", size_of_file, file);
 			}
-			write(client_socket_handle, GET_response, size_of_response_header + size_of_file);
+
+			write(client_socket_handle, file, size_of_file);
+
+			close(file_handle);
+
+			munmap(file, size_of_file);
 		}
 		else
 		{
 			//TODO(bjorn): Log this.
+		}
+
+		if(string_does_contain_tag((char*)data_received, "keep-alive"))
+		{
+			munmap(data_received, bytes_in_queue + 1);
+			goto KEEP_ALIVE;
 		}
 	}
 	else
@@ -286,64 +320,44 @@ main()
 
 			if(bind(SocketHandle, (struct sockaddr *)&Address, sizeof(Address)) == 0)
 			{
-				if(listen(SocketHandle, 10) == 0)
+				if(listen(SocketHandle, SIMULTANEOUS_CONNECTIONS) == 0)
 				{
 					while(true)
 					{
 						struct sockaddr_in ClientAddress = {};
 						socklen_t ClientAddressLenght = sizeof(ClientAddress);
-						int client_socket_handle = -1;
-						while(client_socket_handle == -1)
+
+						s32 client_socket_handle = accept(SocketHandle, 
+																							(struct sockaddr *)&ClientAddress, 
+																							&ClientAddressLenght);
+						if(client_socket_handle == -1)
 						{
-							client_socket_handle = accept(SocketHandle, 
-																						(struct sockaddr *)&ClientAddress, 
-																						&ClientAddressLenght);
 							usleep(16000);
 						}
-
-						u8 buffer[BUFFER_SIZE] = {};
-						int bytes_received = -1;
-						while(bytes_received != 0)
+						else
 						{
-							bytes_received = recv(client_socket_handle, 
-																		(void *)buffer, BUFFER_SIZE-1, 0);
+							//TODO(bjorn): There should maybe always be bytes here waiting.
+							s32 bytes_waiting = 0;
+							ioctl(client_socket_handle, FIONREAD, &bytes_waiting);
 
-							if(bytes_received > 0)
+							if(bytes_waiting > 0)
 							{
 								s32 pid = fork();
-								//NOTE(bjorn): For thread debugging purposes.
-								//kill(0, SIGSTOP);
 
-								if(pid)
+								if(pid == 0)
 								{
-									printf("[-[-[\n%s]-]-]\npid: %i\n", buffer, pid);
-								}
-								else
-								{
-									u8* data_recieved_from_client = (u8*)mmap(0, bytes_received + 1,
-																														PROT_READ | PROT_WRITE,
-																														MAP_PRIVATE 
-																														| MAP_ANONYMOUS,
-																														-1, 0);
-									for(s32 byte_index = 0;
-											byte_index < bytes_received;
-											++byte_index)
-									{
-										data_recieved_from_client[byte_index] = buffer[byte_index];
-									}
-									data_recieved_from_client[bytes_received] = '\0';
+									//NOTE(bjorn): For thread debugging purposes.
+									//kill(0, SIGSTOP);
 
-									handle_request_through_fork(client_socket_handle, 
-																							(void *)data_recieved_from_client, 
-																							bytes_received + 1);
+									handle_request_through_fork(client_socket_handle);
 
-									// free(data_recieved_from_client);
+									close(client_socket_handle);
+									printf("Connection ended correctly\n");
+
 									_exit(0);
 								}
 							}
-							usleep(16000);
 						}
-						printf("Connection ended correctly\n");
 					}
 				}
 				else
