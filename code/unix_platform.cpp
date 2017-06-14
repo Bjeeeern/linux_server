@@ -127,13 +127,11 @@ get_string_between_tags(char *string, const char *pre, const char *post)
 
 	return new_string;
 }
-
 internal_function b32
 string_does_contain_tag(char *string, const char *tag)
 {
 	while(they_differ(string, tag))
 	{
-		printf("\t\t%s\n", string);
 		if(*string++ == '\0')
 		{
 			return false;
@@ -384,21 +382,25 @@ main()
 				else
 				{
 					//TODO(bjorn): Log this.
+					printf("Can not listen to socket for simultaneous connections.\n");
 				}
 			}
 			else
 			{
 				//TODO(bjorn): Log this.
+				printf("Can not bind socket properly.\n");
 			}
 		}
 		else
 		{
 			//TODO(bjorn): Log this.
+			printf("Can not set socket flags properly.\n");
 		}
 	}
 	else
 	{
 		//TODO(bjorn): Log this.
+		printf("Can not create an Inet socket.\n");
 	}
 
 	return 0;
