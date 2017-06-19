@@ -1,0 +1,9 @@
+typedef PLATFORM_LOG_STRING(platform_log_string);
+typedef PLATFORM_OPEN_FILE(platform_open_file);
+typedef PLATFORM_GET_NEXT_PART_OF_FILE(platform_get_next_part_of_file);
+typedef PLATFORM_GET_LAST_EDIT_TIMESTAMP(platform_get_last_edit_timestamp);
+typedef PLATFORM_BYTES_IN_CONNECTION_QUEUE(platform_bytes_in_connection_queue);
+typedef PLATFORM_READ_FROM_CONNECTION(platform_read_from_connection);
+typedef PLATFORM_WRITE_TO_CONNECTION(platform_write_to_connection);
+typedef PLATFORM_SLEEP_X_SECONDS(platform_sleep_x_seconds);
+typedef PLATFORM_EXECUTE_SHELL_COMMAND(platform_execute_shell_command);
