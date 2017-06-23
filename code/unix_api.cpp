@@ -193,7 +193,7 @@ PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 		return true;
 	}
 
-	log_string("get_next_part_of_file()\n");
+	log_string("execute_shell_command()\n");
 	if(status_code == 127)
 	{
 		log_string("Could not find/run /bin/sh\n");

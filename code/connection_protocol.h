@@ -99,21 +99,27 @@ typedef PLATFORM_EXECUTE_SHELL_COMMAND(platform_execute_shell_command);
 
 struct platform_api
 {
-	platform_log_string									log_string;
-	platform_open_file									open_file;
-	platform_get_next_part_of_file			get_next_part_of_file;
-	platform_get_last_edit_timestamp		get_last_edit_timestamp;
-	platform_bytes_in_connection_queue	bytes_in_connection_queue;
-	platform_read_from_connection				read_from_connection;
-	platform_write_to_connection				write_to_connection;
-	platform_sleep_x_seconds						sleep_x_seconds;
-	platform_execute_shell_command			execute_shell_command;
+	platform_log_string									*log_string;
+	platform_open_file									*open_file;
+	platform_get_next_part_of_file			*get_next_part_of_file;
+	platform_get_last_edit_timestamp		*get_last_edit_timestamp;
+	platform_bytes_in_connection_queue	*bytes_in_connection_queue;
+	platform_read_from_connection				*read_from_connection;
+	platform_write_to_connection				*write_to_connection;
+	platform_sleep_x_seconds						*sleep_x_seconds;
+	platform_execute_shell_command			*execute_shell_command;
 };
+
 struct connection_memory
 {
+	char *directory_of_executable;
 	s32 storage_size;
 	void *storage;
-	platform_api api;
+	union
+	{
+		platform_api api;
+		void * api_function_pointers[1024];
+	};
 };
 
 #define SERVER_HANDLE_CONNECTION(name) void name(s32 connection_id, \
@@ -127,7 +133,6 @@ SERVER_HANDLE_CONNECTION(handle_connection_stub)
 
 #define SERVER_THIS_IS_MY_PROTOCOL(name) b32 name(void *content_sniff, \
 																									s32 content_sniff_size, \
-																									char *url, \
 																									u32 tcp_protocol_number)
 typedef SERVER_THIS_IS_MY_PROTOCOL(server_this_is_my_protocol);
 SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol_stub)
