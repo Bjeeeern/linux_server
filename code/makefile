@@ -2,6 +2,8 @@ ignored_warnings = -Wno-c++11-compat-deprecated-writable-strings -Wno-format-sec
 
 build: FORCE
 	mkdir -p ../build
+	#TODO(bjorn): base the ordering of the functions on the api struct 
+	# and not on the order of the declarations
 	grep -oE "\(platform_.*\)" connection_protocol.h | sed "s/(platform_//g" | sed "s/)//g" > ../build/platform_api_names_in_order.txt
 	gcc -g $(ignored_warnings) -c github_webhook.cpp -o ../build/github_webhook.o
 	gcc -g $(ignored_warnings) -c unix_api.cpp -o ../build/unix_api.o
