@@ -49,12 +49,12 @@
  */
 
 #include <stdio.h>
-PLATFORM_LOG_STRING(log_string)
+extern "C" PLATFORM_LOG_STRING(log_string)
 {
 	printf(message);
 }
 
-PLATFORM_GET_LAST_EDIT_TIMESTAMP(get_last_edit_timestamp)
+extern "C" PLATFORM_GET_LAST_EDIT_TIMESTAMP(get_last_edit_timestamp)
 {
 	s32 file_handle;
 	struct stat file_stats;
@@ -76,7 +76,7 @@ PLATFORM_GET_LAST_EDIT_TIMESTAMP(get_last_edit_timestamp)
 	}
 }
 
-PLATFORM_OPEN_FILE(open_file)
+extern "C" PLATFORM_OPEN_FILE(open_file)
 {
 	loaded_file result = {};
 
@@ -118,7 +118,7 @@ PLATFORM_OPEN_FILE(open_file)
 	}
 }
 
-PLATFORM_GET_NEXT_PART_OF_FILE(get_next_part_of_file)
+extern "C" PLATFORM_GET_NEXT_PART_OF_FILE(get_next_part_of_file)
 {
 	loaded_file result = file;
 	if(!result.there_is_more_content)
@@ -173,19 +173,19 @@ PLATFORM_GET_NEXT_PART_OF_FILE(get_next_part_of_file)
 	}
 }
 
-PLATFORM_BYTES_IN_CONNECTION_QUEUE(bytes_in_connection_queue)
+extern "C" PLATFORM_BYTES_IN_CONNECTION_QUEUE(bytes_in_connection_queue)
 {
 	s32 bytes_in_queue;
 	ioctl(connection_id, FIONREAD, &bytes_in_queue);
 	return bytes_in_queue;
 }
 
-PLATFORM_SLEEP_X_SECONDS(sleep_x_seconds)
+extern "C" PLATFORM_SLEEP_X_SECONDS(sleep_x_seconds)
 {
 	usleep((useconds_t)(1000.0f * 1000.0f * seconds));
 }
 
-PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
+extern "C" PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 {
 	s32 status_code = system(script);
 	if(status_code == 0)
@@ -207,12 +207,12 @@ PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 	return false;
 }
 
-PLATFORM_WRITE_TO_CONNECTION(write_to_connection)
+extern "C" PLATFORM_WRITE_TO_CONNECTION(write_to_connection)
 {
 	write(connection_id, source, bytes_to_send);
 }
 
-PLATFORM_READ_FROM_CONNECTION(read_from_connection)
+extern "C" PLATFORM_READ_FROM_CONNECTION(read_from_connection)
 {
 	s32 bytes_read = recv(connection_id, load_location, bytes_to_read, 0);
 	if(bytes_read < bytes_to_read)

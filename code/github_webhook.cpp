@@ -13,7 +13,7 @@ they_dont_differ(char *string, char *tag)
 	return *tag == *string;
 }
 
-SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol)
+extern "C" SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol)
 {
 	if(content_sniff_size >= 23)
 	{
@@ -30,7 +30,7 @@ append_to_string(char *string, char *appendix)
 	*string = '\0';
 }
 
-SERVER_HANDLE_CONNECTION(handle_connection)
+extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	char *command = (char *)memory.storage;
 	append_to_string(command, "cd");

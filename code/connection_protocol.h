@@ -110,6 +110,7 @@ struct platform_api
 	platform_execute_shell_command			*execute_shell_command;
 };
 
+#define MAX_NUMBER_OF_PLATFORM_FUNCTIONS 256
 struct connection_memory
 {
 	char *directory_of_executable;
@@ -118,7 +119,7 @@ struct connection_memory
 	union
 	{
 		platform_api api;
-		void * api_function_pointers[1024];
+		void * api_function_pointers[MAX_NUMBER_OF_PLATFORM_FUNCTIONS];
 	};
 };
 
