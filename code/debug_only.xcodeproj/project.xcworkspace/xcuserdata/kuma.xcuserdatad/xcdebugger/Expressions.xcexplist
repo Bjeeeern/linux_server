@@ -22,6 +22,9 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "all_dyn_lib_names_in_dir(char*):unix_platform.cpp">
+      </ContextState>
+      <ContextState
          contextName = "open_file(char*, unsigned int, void*):unix_platform.cpp">
          <PersistentStrings>
             <PersistentString
@@ -37,6 +40,14 @@
          <PersistentStrings>
             <PersistentString
                value = "diff_with_tag(string, tag)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "all_api_function_names(char*, char*):unix_platform.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "result.at(1,0)">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -77,14 +88,6 @@
       </ContextState>
       <ContextState
          contextName = "main:unix_platform.cpp">
-         <PersistentStrings>
-            <PersistentString
-               value = "*(temp_file -2)">
-            </PersistentString>
-            <PersistentString
-               value = "8000">
-            </PersistentString>
-         </PersistentStrings>
       </ContextState>
       <ContextState
          contextName = "SDL_output_sound(sdl_audio_ring_buffer*, game_sound_output_buffer, int, int):sdl_kumage.cpp">

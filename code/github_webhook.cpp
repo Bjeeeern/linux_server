@@ -34,7 +34,7 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	char *command = (char *)memory.storage;
 	append_to_string(command, "cd");
-	append_to_string(command, memory.directory_of_executable);
+	append_to_string(command, memory.path_to_webroot);
 	append_to_string(command, "../code && git pull && make build");
 	memory.api.execute_shell_command(command);
   return;

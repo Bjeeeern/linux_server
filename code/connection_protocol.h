@@ -10,6 +10,25 @@
    1 - Slow code welcome.
  */
 
+/*
+ * TODO
+ * API
+ *
+ * OS TO PROTOCOL
+ *
+ * PROTOCOL TO OS
+ *
+ * (LATER is_tcp)
+ * protocol_main_thread
+ *	connection_id
+ *	1 mb memory in, no leaks 100%
+ * this_is_my_protocol
+ *	read 1kb without pulling from tcpbuffer and 
+ *	1kb url and judge it
+ *	(http://seyama.se/github-push-event)
+ *
+ */
+
 #include <stdint.h>
 typedef uint8_t u8;
 typedef int8_t s8;
@@ -35,6 +54,7 @@ typedef u32 b32;
 #define Gigabytes(number) (Megabytes(number) * 1024LL)
 #define Terabytes(number) (Gigabytes(number) * 1024LL)
 
+#define FILE_PATH_MAX_SIZE 1024
 #define array_count(array) (sizeof(array) / sizeof((array)[0]))
 
 // TODO(bjorn): swap, min, max...   macros???
@@ -99,28 +119,35 @@ typedef PLATFORM_EXECUTE_SHELL_COMMAND(platform_execute_shell_command);
 
 struct platform_api
 {
-	platform_log_string									*log_string;
+	//IMPORTANT(bjorn): Changing the type or order of these two is synonymous 
+	//with rebooting the server or having it crash in an unexpected way.
+	platform_log_string									*log_string; 
+	platform_sleep_x_seconds						*sleep_x_seconds;		  
+
+	//These functions below are not supposed to be called from the main thread.
+	platform_execute_shell_command			*execute_shell_command;
 	platform_open_file									*open_file;
 	platform_get_next_part_of_file			*get_next_part_of_file;
 	platform_get_last_edit_timestamp		*get_last_edit_timestamp;
 	platform_bytes_in_connection_queue	*bytes_in_connection_queue;
 	platform_read_from_connection				*read_from_connection;
 	platform_write_to_connection				*write_to_connection;
-	platform_sleep_x_seconds						*sleep_x_seconds;
-	platform_execute_shell_command			*execute_shell_command;
 };
 
-#define MAX_NUMBER_OF_PLATFORM_FUNCTIONS 256
+#define MAX_NUMBER_OF_PLATFORM_FUNCTIONS 1024
 struct connection_memory
 {
-	char *directory_of_executable;
+	char *path_to_webroot;
 	s32 storage_size;
+
 	void *storage;
 	union
 	{
 		platform_api api;
 		void * api_function_pointers[MAX_NUMBER_OF_PLATFORM_FUNCTIONS];
 	};
+	void *dll_handle;
+	char dll_path[FILE_PATH_MAX_SIZE];
 };
 
 #define SERVER_HANDLE_CONNECTION(name) void name(s32 connection_id, \

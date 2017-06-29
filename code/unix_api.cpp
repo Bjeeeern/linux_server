@@ -11,43 +11,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-
-/*
- * TODO
- * API
- *
- * os to protocol
- *
- * open_file (max 512 kb)
- * next_part_of_file
- *	struct
- *		pointer
- *		size
- *		page
- *		max_size
- * get_file_last_edited
- *		64u seconds since origin
- * bytes_in_connection_buffer
- *		32u (if larger than 256 kb, send error too large request)
- * read_from_connection
- * write_to_connection
- * sleep_x_seconds
- * run_bash_script
- *	(will work on windows aswell!)
- *
- * protocol to os
- *
- * (LATER is_tcp)
- * protocol_main_thread
- *	connection_id
- *	1 mb memory in, no leaks 100%
- * this_is_my_protocol
- *	read 1kb without pulling from tcpbuffer and 
- *	1kb url and judge it
- *	(http://seyama.se/github-push-event)
- *
- */
-
 #include <stdio.h>
 extern "C" PLATFORM_LOG_STRING(log_string)
 {
