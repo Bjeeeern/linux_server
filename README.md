@@ -6,7 +6,7 @@ DNSサーバーはfreedns( http://freedns.afraid.org )を使って、ドメイ�
 
 ## webサイトについて ##
 
-http://seyama.se　はまずPortfolioとして使っているつもりです。
+Portfolioとして使っているつもりです。
 
 
 ## サーバーについて ##
