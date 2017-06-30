@@ -58,6 +58,38 @@ typedef u32 b32;
 #define array_count(array) (sizeof(array) / sizeof((array)[0]))
 
 // TODO(bjorn): swap, min, max...   macros???
+char *
+int_to_string(s32 number, char *string)
+{
+	if(number == 0)
+	{
+		return (char *)"0";
+	}
+
+	char buffer[256] = {};
+	s32 size_of_string = 0;
+
+	while(number != 0) 
+	{
+		s32 dividend = number / 10;
+		s32 rest = number - (dividend * 10);
+		buffer[size_of_string] = '0' + (char)rest;
+
+		number /= 10;
+		size_of_string += 1;
+	}
+
+	string[size_of_string] = '\0';
+
+	s32 copy_index = size_of_string - 1;
+	s32 buffer_index = 0;
+	while(copy_index != -1)
+	{
+		string[copy_index--] = buffer[buffer_index++];
+	}
+	return string;
+}
+
 
 //
 // NOTE(bjorn): Stuff the platform provides to the server.
@@ -66,9 +98,7 @@ typedef u32 b32;
 typedef PLATFORM_LOG_STRING(platform_log_string);
 
 #if HANDMADE_SLOW
-#define assert(expression, message) if(!(expression)){ platform_log_string(message); }
 #else
-#define assert(expression, message)
 #endif
 
 
@@ -160,8 +190,7 @@ SERVER_HANDLE_CONNECTION(handle_connection_stub)
 }
 
 #define SERVER_THIS_IS_MY_PROTOCOL(name) b32 name(void *content_sniff, \
-																									s32 content_sniff_size, \
-																									u32 tcp_protocol_number)
+																									s32 content_sniff_size)
 typedef SERVER_THIS_IS_MY_PROTOCOL(server_this_is_my_protocol);
 SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol_stub)
 {

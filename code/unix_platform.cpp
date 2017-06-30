@@ -13,6 +13,7 @@
 #include <dlfcn.h>
 #include <sys/stat.h> 
 #include <sys/mman.h>
+#include <sys/ioctl.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -312,9 +313,6 @@ main()
 #else // not __APPLE__
 	if(readlink("/proc/self/exe", current_working_directory, size) == -1)
 	{
-		// TODO(bjorn): Figure out what to do here.
-		//log_string("getcwd()\n");
-		//log_string("could not get hold of current directory\n");
 		printf("readlink(\"/proc/self/exe\") failed\n");
 		return 2;
 	}
@@ -376,93 +374,156 @@ main()
 	load_dyn_libs(dyn_libs, api_funcs, current_working_directory, 
 								&connection_memory_template, protocols, protocol_count);
 
-	//TODO(bjorn): Delete this test.
-	connection_memory_template.api.log_string("jaaa");
-	((platform_log_string*)connection_memory_template.api_function_pointers[0])("jaaa");
-	connection_memory_template.api.execute_shell_command("echo \"ja gjorde de!\"");
-	/*
-		 s32 socket_handle = socket(AF_INET, SOCK_STREAM, 0);
-		 if(socket_handle != -1)
-		 {
-		 int flags = fcntl(socket_handle, F_GETFL, 0);
-		 if(fcntl(socket_handle, F_SETFL, flags | O_NONBLOCK) != -1)
-		 {
-		 struct sockaddr_in address = {};
+	platform_log_string *api_log_string = 
+		connection_memory_template.api.log_string;
+	platform_sleep_x_seconds *api_sleep_x_seconds = 
+		connection_memory_template.api.sleep_x_seconds;
+
+	s32 socket_handle = socket(AF_INET, SOCK_STREAM, 0);
+	if(socket_handle == -1)
+	{
+		api_log_string("Can not create an Inet socket.\n");
+		return 2;
+	}
+
+	int flags = fcntl(socket_handle, F_GETFL, 0);
+	if(fcntl(socket_handle, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		api_log_string("Can not set socket flags properly.\n");
+		return 2;
+	}
+
+	struct sockaddr_in address = {};
 	//TODO(bjorn): Read this from a settings text file.
 	address.sin_family = AF_INET;
 	address.sin_port = htons(8000);
 	address.sin_addr.s_addr = INADDR_ANY;
 
-	if(bind(socket_handle, (struct sockaddr *)&address, sizeof(address)) == 0)
+	if(bind(socket_handle, (struct sockaddr *)&address, sizeof(address)) != 0)
 	{
-	if(listen(socket_handle, SIMULTANEOUS_CONNECTIONS) == 0)
+		api_log_string("Can not bind socket properly.\n");
+		return 2;
+	}
+
+	if(listen(socket_handle, SIMULTANEOUS_CONNECTIONS) != 0)
 	{
+		api_log_string("Can not listen to socket for simultaneous connections.\n");
+		return 2;
+	}
+
 	while(true)
 	{
-	struct sockaddr_in client_address = {};
-	socklen_t client_address_lenght = sizeof(client_address);
+		struct sockaddr_in client_address = {};
+		socklen_t client_address_lenght = sizeof(client_address);
 
-	s32 client_socket_handle = accept(socket_handle, 
-	(struct sockaddr *)&client_address, 
-	&client_address_lenght);
-	if(client_socket_handle == -1)
-	{
-	api.sleep_x_seconds(0.016f); }
-	else
-	{
-	//TODO(bjorn): There should maybe always be bytes here waiting.
-	s32 bytes_waiting = api.bytes_in_connection_queue(client_socket_handle);
+		s32 client_socket_handle = accept(socket_handle, 
+																			(struct sockaddr *)&client_address, 
+																			&client_address_lenght);
+		if(client_socket_handle == -1)
+		{
+			//TODO(bjorn): Check for updates to the dlls.
+			api_sleep_x_seconds(0.016f); 
+		}
+		else
+		{
+			//TODO(bjorn): There should maybe always be bytes here waiting.
+			s32 bytes_waiting;
+			ioctl(client_socket_handle, FIONREAD, &bytes_waiting);
 
-	if(bytes_waiting > 0)
-	{
-	s32 pid = fork();
+			if(bytes_waiting > 0)
+			{
+				s32 pid = fork();
 
-	if(pid == 0)
-	{
-	//NOTE(bjorn): For thread debugging purposes.
-	//kill(0, SIGSTOP);
+				if(pid == 0)
+				{
+					//NOTE(bjorn): For thread debugging purposes.
+					//kill(0, SIGSTOP);
 
-	//TODO(bjorn): Allocate here within the new thread, no
-	//leakage and automatic cleanup guaranteed
+					connection_memory memory = connection_memory_template;
 
-	// s32 bytes_read = recv(connection_id, //											load_location, 
-	//											bytes_to_read, MSG_PEEK);
+					memory.storage = mmap(0, memory.storage_size, 
+												 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-	connection_memory memory = {};
-	handle_connection_stub(client_socket_handle, pid, memory);
+					dlerror();
+					void *dll_handle = dlopen(memory.dll_path, RTLD_NOW);
+					if(dll_handle != memory.dll_handle)
+					{
+						api_log_string("Repeated calls to the same dlopen is not"
+													 " generating the same handle! OSAPI\n");
+						api_log_string("Old handle:");
+						char empty_string[256];
+						api_log_string(int_to_string((s64)memory.dll_handle, empty_string));
+						api_log_string("\n");
+						api_log_string("New handle:");
+						api_log_string(int_to_string((s64)dll_handle, empty_string));
+						api_log_string("\n");
 
-	close(client_socket_handle);
-	api.log_string("Connection ended.\n");
+					}
 
-	_exit(0);
+					void *load_location = mmap(0, bytes_waiting, PROT_READ|PROT_WRITE,
+																		 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+					s32 bytes_read = recv(client_socket_handle, load_location, bytes_waiting,
+															 	MSG_PEEK);
+					if(bytes_waiting != bytes_read)
+					{
+						api_log_string("Bytes read not same as bytes in queue.\n");
+					}
+
+					b32 message_was_not_handled = true;
+					for(s32 protocol_index = 0;
+							protocol_index < protocol_count;
+							++protocol_index)
+					{
+						protocol_api protocol = protocols[protocol_index];
+
+						if(protocol.this_is_my_protocol(load_location, bytes_read)) 
+						{
+							
+							void *dll_handle = dlopen(protocol.dll_path, RTLD_NOW);
+							if(dll_handle != protocol.dll_handle)
+							{
+								api_log_string("Repeated calls to the same dlopen is not"
+															 " generating the same handle! PROTOCOL\n");
+								api_log_string("Old handle:");
+								char empty_string[256];
+								api_log_string(int_to_string((s64)protocol.dll_handle, empty_string));
+								api_log_string("\n");
+								api_log_string("New handle:");
+								api_log_string(int_to_string((s64)dll_handle, empty_string));
+								api_log_string("\n");
+							}
+
+							protocol.handle_connection(client_socket_handle, getpid(), memory);
+
+							dlclose(protocol.dll_handle);
+
+							message_was_not_handled = false;
+
+							//TODO(bjorn): What is the right thing to do here? Should
+							//multiple protocols be able to respond to a single connection?
+							//Some sort of priority value?
+							break;
+						}
+					}
+					if(message_was_not_handled)
+					{
+						api_log_string("No fitting protocol was found for pid:");
+					}
+					else
+					{
+						api_log_string("Connection ended for pid:");
+					}
+					char empty_string[256];
+					api_log_string(int_to_string(getpid(), empty_string));
+					api_log_string("\n");
+
+					dlclose(memory.dll_handle);
+					close(client_socket_handle);
+
+					_exit(0);
+				}
+			}
+		}
 	}
-	}
-	}
-	}
-	}
-	else
-	{
-	//TODO(bjorn): Log this.
-	api.log_string("Can not listen to socket for simultaneous connections.\n");
-	}
-	}
-	else
-	{
-	//TODO(bjorn): Log this.
-	api.log_string("Can not bind socket properly.\n");
-	}
-}
-else
-{
-	//TODO(bjorn): Log this.
-	api.log_string("Can not set socket flags properly.\n");
-}
-}
-else
-{
-	//TODO(bjorn): Log this.
-	api.log_string("Can not create an Inet socket.\n");
-}
-*/
-return 0;
+	return 0;
 }

@@ -127,42 +127,6 @@ string_does_contain_tag(char *string, const char *tag)
 	return true;
 }
 		
-internal_function char *
-int_to_string(s32 number)
-{
-	if(number == 0)
-	{
-		return (char *)"0";
-	}
-
-	char buffer[256] = {};
-	s32 size_of_string = 0;
-
-	while(number != 0) 
-	{
-		s32 dividend = number / 10;
-		s32 rest = number - (dividend * 10);
-		buffer[size_of_string] = '0' + (char)rest;
-
-		number /= 10;
-		size_of_string += 1;
-	}
-
-	char *string = (char *)mmap(0, size_of_string + 1,
-															PROT_READ | PROT_WRITE,
-															MAP_PRIVATE | MAP_ANONYMOUS,
-															-1, 0); 
-	string[size_of_string] = '\0';
-
-	s32 copy_index = size_of_string - 1;
-	s32 buffer_index = 0;
-	while(copy_index != -1)
-	{
-		string[copy_index--] = buffer[buffer_index++];
-	}
-	return string;
-}
-
 void
 SERVER_HANDLE_CONNECTION(handle_connection)
 {
