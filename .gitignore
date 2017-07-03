@@ -1,4 +1,7 @@
 build/*
-**.xcuserstate
 **.DS_Store
+
+**.xcuserstate
 **.xcbkptlist
+**.pbxproj
+**.xcexplist

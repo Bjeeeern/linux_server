@@ -5,12 +5,13 @@ they_dont_differ(char *string, char *tag)
 {
 	while(*tag != '\0')
 	{
+		if(*string == '\0') { return false; }
 		if(*tag++ - *string++)
 		{
 			return false;
 		}
 	}
-	return *tag == *string;
+	return true;
 }
 
 extern "C" SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol)
@@ -33,9 +34,9 @@ append_to_string(char *string, char *appendix)
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	char *command = (char *)memory.storage;
-	append_to_string(command, "cd");
+	append_to_string(command, "cd ");
 	append_to_string(command, memory.path_to_webroot);
-	append_to_string(command, "../code && git pull && make build");
+	append_to_string(command, "../code && echo yoyoyo");//git pull && make build");
 	memory.api.execute_shell_command(command);
   return;
 }

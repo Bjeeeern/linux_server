@@ -5,6 +5,7 @@
 #include <mach-o/dyld.h>
 #endif
 
+#include <signal.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <fcntl.h>
@@ -53,22 +54,29 @@ struct string_matrix
 		{
 			return &((this->strings)[line*this->max_line_width + character]);
 		}
+	void
+		free()
+		{
+			if(this->strings)
+			{
+				munmap(this->strings, this->lines * this->max_line_width);
+				this->lines = 0;
+				this->max_line_width = 0;
+				this->strings = 0;
+			}
+		}
 };
-	internal_function string_matrix
-all_dyn_lib_names_in_dir(char *directory)
+
+	internal_function void
+determine_area_for_dll_filename(char *directory, string_matrix *result)
 {
-	string_matrix result = {};
-	
-	DIR *directory_handle;
+	result->max_line_width = 0;
+	result->lines = 0;
+
+	DIR *directory_handle = opendir(directory);
+	if(directory_handle == 0){ return; }
+
 	struct dirent *directory_info;
-
-	directory_handle = opendir(directory);
-	if(directory_handle == 0)
-	{
-		printf("opendir(\"%s\") failed\n", directory);
-		return result;
-	}
-
 	while((directory_info = readdir(directory_handle)) != NULL)
 	{
 		s32 file_name_lenght = 0;
@@ -78,31 +86,35 @@ all_dyn_lib_names_in_dir(char *directory)
 			++file_name_lenght;
 		}
 
-		if(file_name_lenght >= 8) //NOTE(bjorn): dir + blah + .so\0
+		b32 might_be_a_dll = file_name_lenght > 3;
+		if(might_be_a_dll) //NOTE(bjorn): blah + .so\0
 		{
 			char *tail_pointer = directory_info->d_name;
 			while(*tail_pointer != '\0'){ ++tail_pointer; }
 			tail_pointer -= 3;
 
-			b32 is_a_dynlib_file = string_matches_tag(tail_pointer, ".so");
-			if(is_a_dynlib_file)
+			b32 is_a_dll = string_matches_tag(tail_pointer, ".so");
+			if(is_a_dll)
 			{
-				if(file_name_lenght > result.max_line_width) 
+				if(file_name_lenght > result->max_line_width) 
 				{
-					result.max_line_width = file_name_lenght;
+					result->max_line_width = file_name_lenght;
 				}
-				result.lines += 1;
+				result->lines += 1;
 			}
 		}
 	}
 	closedir(directory_handle);
+}
 
-	result.strings = (char *)mmap(0, result.lines * result.max_line_width, 
-												 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-
-	directory_handle = opendir(directory);
+internal_function void
+all_dyn_lib_names_in_dir(char *directory, string_matrix *result)
+{
+	DIR *directory_handle = opendir(directory);
+	if(directory_handle == 0){ return; }
 
 	s32 file_index = 0;
+	struct dirent *directory_info;
 	while((directory_info = readdir(directory_handle)) != NULL)
 	{
 		s32 file_name_lenght = 0;
@@ -112,63 +124,53 @@ all_dyn_lib_names_in_dir(char *directory)
 			++file_name_lenght;
 		}
 
-		if(file_name_lenght >= 8) //NOTE(bjorn): dir + blah + .so\0
+		b32 might_be_a_dll = file_name_lenght > 3;
+		if(might_be_a_dll) //NOTE(bjorn): blah + .so\0
 		{
 			char *tail_pointer = directory_info->d_name;
 			while(*tail_pointer != '\0'){ ++tail_pointer; }
 			tail_pointer -= 3;
 
-			b32 is_a_dynlib_file = string_matches_tag(tail_pointer, ".so");
-			if(is_a_dynlib_file)
+			b32 is_a_dll = string_matches_tag(tail_pointer, ".so");
+			if(is_a_dll)
 			{
 				char *copy_pointer = directory_info->d_name;
 				s32 char_index = 0;
 				while(*copy_pointer != '\0')
 				{ 
-					*result.at(file_index, char_index++) = *copy_pointer++; 
+					*result->at(file_index, char_index++) = *copy_pointer++; 
 				}
-				*result.at(file_index, char_index) = '\0';
+				*result->at(file_index, char_index) = '\0';
 
 				file_index += 1;
 			}
 		}
 	}
 	closedir(directory_handle);
-	return result;
 }
 
-	internal_function string_matrix 
-all_api_function_names(char *dir, char *api_name_order_file)
+	internal_function void 
+determine_area_for_api_funcs(char *path_to_file, string_matrix *result)
 {
-	string_matrix result = {};
-
-	char full_path[FILE_PATH_MAX_SIZE] = {};
-	{
-		s32 char_index = 0;
-
-		char *copy_pointer = dir;
-		while(*copy_pointer != '\0'){ full_path[char_index++] = *copy_pointer++; }
-		copy_pointer = api_name_order_file;
-		while(*copy_pointer != '\0'){ full_path[char_index++] = *copy_pointer++; }
-		full_path[char_index] = '\0';
-	}
-
 	s32 file_handle;
 	{
-		file_handle = open(full_path, O_RDONLY);
+		file_handle = open(path_to_file, O_RDONLY);
 		if(file_handle == -1)
 		{
-			printf("open(%s)", full_path);
+			printf("open(%s)", path_to_file);
 			printf("failed to open");
-			return result;
+			return;
 		}
 	}
+
+	result->max_line_width = 0;
+	result->lines = 0;
 
 	struct stat file_stats;
 	fstat(file_handle, &file_stats);
 
 	char *temp_file = (char *)mmap(0, file_stats.st_size, 
-																		 PROT_READ, MAP_PRIVATE, file_handle, 0);
+																 PROT_READ, MAP_PRIVATE, file_handle, 0);
 	close(file_handle);
 
 	{
@@ -185,9 +187,9 @@ all_api_function_names(char *dir, char *api_name_order_file)
 				}
 				function_index += 1;
 
-				if(char_index+1 > result.max_line_width)
+				if(char_index+1 > result->max_line_width)
 				{
-					result.max_line_width = char_index + 1;
+					result->max_line_width = char_index + 1;
 				}
 				char_index = 0;
 			}
@@ -198,11 +200,30 @@ all_api_function_names(char *dir, char *api_name_order_file)
 			++file_pointer;
 		}
 		//NOTE(bjorn): The function_index was incremented on the last newline.
-		result.lines = function_index;
+		result->lines = function_index;
+	}
+}
+
+	internal_function void 
+all_api_function_names(char *path_to_file, string_matrix *result)
+{
+	s32 file_handle;
+	{
+		file_handle = open(path_to_file, O_RDONLY);
+		if(file_handle == -1)
+		{
+			printf("open(%s)", path_to_file);
+			printf("failed to open");
+			return;
+		}
 	}
 
-	result.strings = (char *)mmap(0, result.lines * result.max_line_width, 
-												 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+	struct stat file_stats;
+	fstat(file_handle, &file_stats);
+
+	char *temp_file = (char *)mmap(0, file_stats.st_size, 
+																 PROT_READ, MAP_PRIVATE, file_handle, 0);
+	close(file_handle);
 
 	{
 		s32 function_index = 0;
@@ -216,35 +237,33 @@ all_api_function_names(char *dir, char *api_name_order_file)
 				{
 					++file_pointer;
 				}
-				*result.at(function_index, char_index++) = '\0';
+				*result->at(function_index, char_index++) = '\0';
 				function_index += 1;
 				char_index = 0;
 			}
 			else
 			{
-				*result.at(function_index, char_index++) = *file_pointer;
+				*result->at(function_index, char_index++) = *file_pointer;
 			}
 			++file_pointer;
 		}
-		*result.at(function_index, char_index) = '\0';
+		*result->at(function_index, char_index) = '\0';
 	}
 
 	munmap(temp_file, file_stats.st_size);
-
-	return result;
 }
 
 internal_function void
-load_dyn_libs(string_matrix dyn_libs, string_matrix api_funcs, 
+load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs, 
 							char *dir_of_dlls, connection_memory *conn_mem_temp, 
 							protocol_api *protocols, s32 protocol_count)
 {
 	s32 protocol_index = 0; 
 	for(s32 dyn_lib_file_index = 0;
-			dyn_lib_file_index < dyn_libs.lines;
+			dyn_lib_file_index < dll_filenames.lines;
 			++dyn_lib_file_index)
 	{
-		char *dyn_lib_file = dyn_libs.at(dyn_lib_file_index, 0);
+		char *dyn_lib_file = dll_filenames.at(dyn_lib_file_index, 0);
 
 		void *dyn_lib_handle;
 		char absolute_path_to_dyn_lib_file[FILE_PATH_MAX_SIZE] = {};
@@ -301,61 +320,75 @@ load_dyn_libs(string_matrix dyn_libs, string_matrix api_funcs,
 	s32 
 main()
 {
-	char current_working_directory[FILE_PATH_MAX_SIZE] = {};
-	u32 size = FILE_PATH_MAX_SIZE;
+	char dir_of_exe[FILE_PATH_MAX_SIZE] = {};
 
+	{
 #ifdef __APPLE__
-	if (_NSGetExecutablePath(current_working_directory, &size) != 0) {
-		// Buffer size is too small.
-		printf("_NSGetExecutablePath() failed\n");
-		return 2;
-	}
+		u32 size = FILE_PATH_MAX_SIZE;
+		if (_NSGetExecutablePath(dir_of_exe, &size) != 0) {
+			// Buffer size is too small.
+			printf("_NSGetExecutablePath() failed\n");
+			return 2;
+		}
 #else // not __APPLE__
-	if(readlink("/proc/self/exe", current_working_directory, size) == -1)
-	{
-		printf("readlink(\"/proc/self/exe\") failed\n");
-		return 2;
-	}
+		if(readlink("/proc/self/exe", dir_of_exe, size) == -1)
+		{
+			printf("readlink(\"/proc/self/exe\") failed\n");
+			return 2;
+		}
 #endif
-	{
-		char *tail_pointer = current_working_directory;
+		char *tail_pointer = dir_of_exe;
 		while(*tail_pointer != '\0'){ ++tail_pointer; }
 		while(*tail_pointer != '/'){ --tail_pointer; }
 		*(tail_pointer+1) = '\0';
 	}
 
-	printf("cwd: %s\n", current_working_directory);
+	printf("dir_of_exe: %s\n", dir_of_exe);
 
-	string_matrix dyn_libs = all_dyn_lib_names_in_dir(current_working_directory);
-
+	string_matrix dll_filenames = {};
+	string_matrix api_funcs = {};
+	char full_path_api_names_file[FILE_PATH_MAX_SIZE] = {};
 	{
-		s32 file_index = 0;
-		while(file_index < dyn_libs.lines)
-		{
-			printf("%s\n", dyn_libs.at(file_index, 0));
-			file_index++;
-		}
-	}
+		determine_area_for_dll_filename(dir_of_exe, &dll_filenames);
 
-	string_matrix api_funcs = all_api_function_names(current_working_directory, 
-																									 "platform_api_names_in_order.txt");
+		dll_filenames.strings = 
+			(char *)mmap(0, dll_filenames.lines * dll_filenames.max_line_width, 
+									 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-	{
-		s32 function_name_index = 0;
-		while(function_name_index < api_funcs.lines)
+		all_dyn_lib_names_in_dir(dir_of_exe, &dll_filenames);
+
+		char *api_func_names_file = "platform_api_names_in_order.txt";
 		{
-			printf("%s\n", api_funcs.at(function_name_index++, 0));
+			s32 char_index = 0;
+			char *copy_pointer = dir_of_exe;
+			while(*copy_pointer != '\0')
+			{ 
+				full_path_api_names_file[char_index++] = *copy_pointer++; 
+			}
+			copy_pointer = api_func_names_file;
+			while(*copy_pointer != '\0')
+			{ 
+				full_path_api_names_file[char_index++] = *copy_pointer++; 
+			}
+			full_path_api_names_file[char_index] = '\0';
 		}
+
+		determine_area_for_api_funcs(full_path_api_names_file, &api_funcs);
+
+		api_funcs.strings = 
+			(char *)mmap(0, api_funcs.lines * api_funcs.max_line_width, 
+									 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+
+		all_api_function_names(full_path_api_names_file, &api_funcs);
 	}
 
 	connection_memory connection_memory_template = {};
 	connection_memory_template.storage_size = MEMORY_PER_THREAD;
 
-
 	char path_to_webroot[FILE_PATH_MAX_SIZE] = {};
-	char *write_destination = path_to_webroot;
 	{
-		char *copy_pointer = current_working_directory;
+		char *write_destination = path_to_webroot;
+		char *copy_pointer = dir_of_exe;
 		while(*copy_pointer != '\0'){ *write_destination++ = *copy_pointer++; }
 
 		copy_pointer = "../webroot/";
@@ -365,19 +398,23 @@ main()
 
 	connection_memory_template.path_to_webroot = path_to_webroot;
 
-	s32 protocol_count = dyn_libs.lines - 1;
-	protocol_api *protocols = (protocol_api *)mmap(0, 
-																								 sizeof(protocol_api)*protocol_count,
-																								 PROT_READ|PROT_WRITE,
-																								 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+	s32 protocol_count = 0;
+	protocol_api *protocols = 0;
+	{
+		protocol_count = dll_filenames.lines - 1;
+		protocols = (protocol_api *)mmap(0, sizeof(protocol_api)*protocol_count,
+													 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+	}
 
-	load_dyn_libs(dyn_libs, api_funcs, current_working_directory, 
+	load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, 
 								&connection_memory_template, protocols, protocol_count);
 
 	platform_log_string *api_log_string = 
 		connection_memory_template.api.log_string;
 	platform_sleep_x_seconds *api_sleep_x_seconds = 
 		connection_memory_template.api.sleep_x_seconds;
+
+	api_log_string("Dynamic libraries loaded.\n");
 
 	s32 socket_handle = socket(AF_INET, SOCK_STREAM, 0);
 	if(socket_handle == -1)
@@ -421,12 +458,118 @@ main()
 																			&client_address_lenght);
 		if(client_socket_handle == -1)
 		{
-			//TODO(bjorn): Check for updates to the dlls.
 			api_sleep_x_seconds(0.016f); 
+
+			string_matrix current_dll_filenames = {};
+			{
+				determine_area_for_dll_filename(dir_of_exe, &current_dll_filenames);
+				b32 no_dll_files = 
+					(current_dll_filenames.lines * current_dll_filenames.max_line_width) == 0;
+				if(no_dll_files)
+				{
+					continue;
+				}
+
+				current_dll_filenames.strings = 
+					(char *)mmap(0, 
+											 current_dll_filenames.lines * 
+											 current_dll_filenames.max_line_width, 
+											 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+
+				all_dyn_lib_names_in_dir(dir_of_exe, &current_dll_filenames);
+			}
+
+			b32 the_file_name_has_changed = true;
+			{
+				b32 lib_unix_api_dll_file_was_found = false;
+				s32 current_lib_index;
+				for(current_lib_index = 0;
+						current_lib_index < current_dll_filenames.lines;
+						++current_lib_index)
+				{
+					if(string_matches_tag(current_dll_filenames.at(current_lib_index, 0), 
+																		"lib_unix_api"))
+					{ 
+						lib_unix_api_dll_file_was_found = true;
+						break;
+					}
+				}
+				if(!lib_unix_api_dll_file_was_found)
+				{
+					current_dll_filenames.free();
+					continue;
+				}
+
+				s32 past_lib_index;
+				for(past_lib_index = 0;
+						past_lib_index < dll_filenames.lines;
+						++past_lib_index)
+				{
+					if(string_matches_tag(dll_filenames.at(past_lib_index, 0), "lib_unix_api"))
+					{ 
+						break;
+					}
+				}
+
+
+				the_file_name_has_changed = 
+					!(string_matches_tag(current_dll_filenames.at(current_lib_index, 0), 
+															 dll_filenames.at(past_lib_index, 0)) && 
+						string_matches_tag(dll_filenames.at(past_lib_index, 0),
+															 current_dll_filenames.at(current_lib_index, 0))
+					 );
+			}
+
+			if(the_file_name_has_changed)
+			{
+				dll_filenames.free();
+				dll_filenames = current_dll_filenames;
+
+				api_funcs.free();
+				{
+					determine_area_for_api_funcs(full_path_api_names_file, &api_funcs);
+
+					api_funcs.strings = 
+						(char *)mmap(0, api_funcs.lines * api_funcs.max_line_width, 
+												 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+
+					all_api_function_names(full_path_api_names_file, &api_funcs);
+				}
+
+				{
+					for(s32 protocol_index = 0;
+							protocol_index < protocol_count;
+							++protocol_index)
+					{
+						dlclose(protocols[protocol_index].dll_handle);
+					}
+					munmap(protocols, sizeof(protocol_api) * protocol_count);
+					protocols = 0;
+
+					dlclose(connection_memory_template.dll_handle);
+				}
+
+				protocol_count = dll_filenames.lines - 1;
+				protocols = (protocol_api *)mmap(0, sizeof(protocol_api)* protocol_count,
+																				 PROT_READ|PROT_WRITE, 
+																				 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+
+				load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, 
+											&connection_memory_template, protocols, protocol_count);
+
+				api_log_string = connection_memory_template.api.log_string;
+				api_sleep_x_seconds = connection_memory_template.api.sleep_x_seconds;
+
+				api_log_string("Dynamic libraries reloaded.\n");
+			}
+			else
+			{
+				current_dll_filenames.free();
+			}
 		}
 		else
 		{
-			//TODO(bjorn): There should maybe always be bytes here waiting.
+			//TODO(bjorn): There should maybe always be bytes here waiting. Test.
 			s32 bytes_waiting;
 			ioctl(client_socket_handle, FIONREAD, &bytes_waiting);
 
@@ -436,13 +579,15 @@ main()
 
 				if(pid == 0)
 				{
+					pid = getpid();
 					//NOTE(bjorn): For thread debugging purposes.
-					//kill(0, SIGSTOP);
+					//kill(pid, SIGSTOP);
 
 					connection_memory memory = connection_memory_template;
 
 					memory.storage = mmap(0, memory.storage_size, 
-												 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+																PROT_READ|PROT_WRITE, 
+																MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
 					dlerror();
 					void *dll_handle = dlopen(memory.dll_path, RTLD_NOW);
@@ -457,8 +602,10 @@ main()
 						api_log_string("New handle:");
 						api_log_string(int_to_string((s64)dll_handle, empty_string));
 						api_log_string("\n");
-
 					}
+
+					//NOTE(bjorn): For thread debugging purposes.
+					kill(pid, SIGSTOP);
 
 					void *load_location = mmap(0, bytes_waiting, PROT_READ|PROT_WRITE,
 																		 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
@@ -476,26 +623,22 @@ main()
 					{
 						protocol_api protocol = protocols[protocol_index];
 
+						void *dll_handle = dlopen(protocol.dll_path, RTLD_NOW);
+						if(dll_handle != protocol.dll_handle)
+						{
+							api_log_string("Repeated calls to the same dlopen is not"
+														 " generating the same handle! PROTOCOL\n");
+							api_log_string("Old handle:");
+							char empty_string[256];
+							api_log_string(int_to_string((s64)protocol.dll_handle, empty_string));
+							api_log_string("\n");
+							api_log_string("New handle:");
+							api_log_string(int_to_string((s64)dll_handle, empty_string));
+							api_log_string("\n");
+						}
 						if(protocol.this_is_my_protocol(load_location, bytes_read)) 
 						{
-							
-							void *dll_handle = dlopen(protocol.dll_path, RTLD_NOW);
-							if(dll_handle != protocol.dll_handle)
-							{
-								api_log_string("Repeated calls to the same dlopen is not"
-															 " generating the same handle! PROTOCOL\n");
-								api_log_string("Old handle:");
-								char empty_string[256];
-								api_log_string(int_to_string((s64)protocol.dll_handle, empty_string));
-								api_log_string("\n");
-								api_log_string("New handle:");
-								api_log_string(int_to_string((s64)dll_handle, empty_string));
-								api_log_string("\n");
-							}
-
-							protocol.handle_connection(client_socket_handle, getpid(), memory);
-
-							dlclose(protocol.dll_handle);
+							protocol.handle_connection(client_socket_handle, pid, memory);
 
 							message_was_not_handled = false;
 
@@ -504,7 +647,9 @@ main()
 							//Some sort of priority value?
 							break;
 						}
+						dlclose(protocol.dll_handle);
 					}
+
 					if(message_was_not_handled)
 					{
 						api_log_string("No fitting protocol was found for pid:");
@@ -514,13 +659,17 @@ main()
 						api_log_string("Connection ended for pid:");
 					}
 					char empty_string[256];
-					api_log_string(int_to_string(getpid(), empty_string));
+					api_log_string(int_to_string(pid, empty_string));
 					api_log_string("\n");
 
 					dlclose(memory.dll_handle);
 					close(client_socket_handle);
 
-					_exit(0);
+					kill(pid, SIGKILL);
+				}
+				else
+				{
+					api_sleep_x_seconds(0.016f); 
 				}
 			}
 		}
