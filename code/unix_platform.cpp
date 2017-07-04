@@ -1,5 +1,20 @@
 #include "connection_protocol.h"
 
+//TODO(bjorn): A general todo list:
+//
+// Enable HTTPS on port 443
+//	http://www.informit.com/articles/article.aspx?p=22078
+// 	https://www.openssl.org/source/
+// 	https://certbot.eff.org/#debianjessie-other
+//
+// 	(make the SSL selectable per dll)
+// 	(make the dlls be able to recieve from multiple ports)
+//
+// Make the server be able to listen to an arbitrary number of ports, using the
+// dlls to figure out from what port to which dll(s) a incoming message should
+// be distributed to. Maybe a single read and write and multiple read - style
+// for a single port.
+//
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -316,7 +331,8 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 	}
 }
 
-
+//TODO(bjorn): Do a little bit more rigorous testing to ensure that we are not
+//leaking memory.
 	s32 
 main()
 {
@@ -463,6 +479,7 @@ main()
 			string_matrix current_dll_filenames = {};
 			{
 				determine_area_for_dll_filename(dir_of_exe, &current_dll_filenames);
+
 				b32 no_dll_files = 
 					(current_dll_filenames.lines * current_dll_filenames.max_line_width) == 0;
 				if(no_dll_files)
@@ -494,6 +511,16 @@ main()
 						break;
 					}
 				}
+
+
+				//TODO(bjorn): Here I am saying that if the lib_unix_api.so file was
+				//found then all other relevant .so files has already compiled. This
+				//implies that lib_unix_api.so compiles last and puts a demand on the
+				//flow of the makefile. The program could instead inspect the makefile
+				//and try to figure out how many .so files compiles or maybe it should
+				//just continiously search for new protocols and integrate them as they
+				//pop up.
+
 				if(!lib_unix_api_dll_file_was_found)
 				{
 					current_dll_filenames.free();
@@ -575,115 +602,84 @@ main()
 
 			if(bytes_waiting > 0)
 			{
-				s32 pid = fork();
-
-				if(pid == 0)
+				void *load_location = mmap(0, bytes_waiting, PROT_READ|PROT_WRITE,
+																	 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+				s32 bytes_read = recv(client_socket_handle, load_location, bytes_waiting,
+															MSG_PEEK);
+				if(bytes_waiting != bytes_read)
 				{
-					pid = getpid();
-					//NOTE(bjorn): For thread debugging purposes.
-					//kill(pid, SIGSTOP);
+					api_log_string("Bytes read not same as bytes in queue.\n");
+				}
 
-					connection_memory memory = connection_memory_template;
+				b32 message_was_not_handled = true;
+				for(s32 protocol_index = 0;
+						protocol_index < protocol_count;
+						++protocol_index)
+				{
+					protocol_api protocol = protocols[protocol_index];
 
-					memory.storage = mmap(0, memory.storage_size, 
-																PROT_READ|PROT_WRITE, 
-																MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-
-					void *dll_handle = dlopen(memory.dll_path, RTLD_NOW);
-					if(dll_handle != memory.dll_handle)
+					connection_memory api_only = connection_memory_template;
+					if(protocol.this_is_my_protocol(load_location, bytes_read, api_only)) 
 					{
-						api_log_string("Repeated calls to the same dlopen is not"
-													 " generating the same handle! OSAPI\n");
-						api_log_string("Old handle:");
-						char empty_string[256];
-						api_log_string(int_to_string((s64)memory.dll_handle, empty_string));
-						api_log_string("\n");
-						api_log_string("New handle:");
-						api_log_string(int_to_string((s64)dll_handle, empty_string));
-						api_log_string("\n");
-					}
-					for(s32 protocol_index = 0;
-							protocol_index < protocol_count;
-							++protocol_index)
-					{
-						protocol_api protocol = protocols[protocol_index];
+						message_was_not_handled = false;
 
-						void *dll_handle = dlopen(protocol.dll_path, RTLD_NOW);
-						if(dll_handle != protocol.dll_handle)
+						s32 pid = fork();
+
+						if(pid == 0)
 						{
-							api_log_string("Repeated calls to the same dlopen is not"
-														 " generating the same handle! PROTOCOL\n");
-							api_log_string("Old handle:");
-							char empty_string[256];
-							api_log_string(int_to_string((s64)protocol.dll_handle, empty_string));
-							api_log_string("\n");
-							api_log_string("New handle:");
-							api_log_string(int_to_string((s64)dll_handle, empty_string));
-							api_log_string("\n");
-						}
-					}
+							pid = getpid();
+							//NOTE(bjorn): For thread debugging purposes.
+							//kill(pid, SIGSTOP);
 
-					//NOTE(bjorn): For thread debugging purposes.
-					//kill(pid, SIGSTOP);
+							connection_memory memory = connection_memory_template;
 
-					void *load_location = mmap(0, bytes_waiting, PROT_READ|PROT_WRITE,
-																		 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-					s32 bytes_read = recv(client_socket_handle, load_location, bytes_waiting,
-															 	MSG_PEEK);
-					if(bytes_waiting != bytes_read)
-					{
-						api_log_string("Bytes read not same as bytes in queue.\n");
-					}
+							memory.storage = mmap(0, memory.storage_size, 
+																		PROT_READ|PROT_WRITE, 
+																		MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-					b32 message_was_not_handled = true;
-					for(s32 protocol_index = 0;
-							protocol_index < protocol_count;
-							++protocol_index)
-					{
-						protocol_api protocol = protocols[protocol_index];
+							void *dll_handle = dlopen(memory.dll_path, RTLD_NOW);
 
-						if(protocol.this_is_my_protocol(load_location, bytes_read)) 
-						{
+							for(s32 protocol_index = 0;
+									protocol_index < protocol_count;
+									++protocol_index)
+							{
+								protocol_api protocol = protocols[protocol_index];
+
+								void *dll_handle = dlopen(protocol.dll_path, RTLD_NOW);
+							}
+
+							//NOTE(bjorn): For thread debugging purposes.
+							//kill(pid, SIGSTOP);
+
 							protocol.handle_connection(client_socket_handle, pid, memory);
-
-							message_was_not_handled = false;
 
 							//TODO(bjorn): What is the right thing to do here? Should
 							//multiple protocols be able to respond to a single connection?
 							//Some sort of priority value?
-							break;
+							for(s32 protocol_index = 0;
+									protocol_index < protocol_count;
+									++protocol_index)
+							{
+								dlclose(protocols[protocol_index].dll_handle);
+
+							}
+							dlclose(memory.dll_handle);
+
+							api_log_string("Connection ended for pid:");
+							char empty_string[256];
+							api_log_string(int_to_string(pid, empty_string));
+							api_log_string("\n");
+
+							kill(pid, SIGKILL);
 						}
 					}
-
 					if(message_was_not_handled)
 					{
-						api_log_string("No fitting protocol was found for pid:");
+						api_log_string("No fitting protocol was found");
 					}
-					else
-					{
-						api_log_string("Connection ended for pid:");
-					}
-					char empty_string[256];
-					api_log_string(int_to_string(pid, empty_string));
-					api_log_string("\n");
-
-					for(s32 protocol_index = 0;
-							protocol_index < protocol_count;
-							++protocol_index)
-					{
-						dlclose(protocols[protocol_index].dll_handle);
-
-					}
-					dlclose(memory.dll_handle);
-					close(client_socket_handle);
-
-					kill(pid, SIGKILL);
-				}
-				else
-				{
-					api_sleep_x_seconds(0.016f); 
 				}
 			}
+			close(client_socket_handle);
 		}
 	}
 	return 0;

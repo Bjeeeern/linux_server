@@ -1,6 +1,6 @@
 #include "connection_protocol.h"
 
-
+/*
 internal_function void append_to_string(char *string, char *appendix)
 {
 	while(*string++ != '\0'){}
@@ -119,17 +119,62 @@ string_does_contain_tag(char *string, const char *tag)
 {
 	while(they_differ(string, tag))
 	{
-		if(*string++ == '\0')
+		if(*string == '\0')
+		{
+			return false;
+		}
+		++string;
+	}
+	return true;
+}
+*/
+
+internal_function b32
+they_dont_differ(char *string, char *tag)
+{
+	while(*tag != '\0')
+	{
+		if(*string == '\0') { return false; }
+		if(*tag++ != *string++)
 		{
 			return false;
 		}
 	}
 	return true;
 }
-		
-void
-SERVER_HANDLE_CONNECTION(handle_connection)
+
+extern "C" SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol)
 {
+	//memory.api.pause_thread();
+
+	char *string = (char *)content_sniff;
+	//NOTE(bjorn): This is just for simple HTTP.
+	while(*string != ' ')
+	{ 
+		if(*string == '\0')
+		{
+			return false;
+		}
+		++string;
+	}
+	++string;
+
+	while(*string != ' ')
+	{ 
+		if(*string == '\0')
+		{
+			return false;
+		}
+		++string;
+	}
+	++string;
+
+	return they_dont_differ(string, "HTTP");
+}
+		
+extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
+{
+	/*
 	s32 pid = getpid();
 
 KEEP_ALIVE:
@@ -271,5 +316,6 @@ KEEP_ALIVE:
 	{
 		//TODO(bjorn): Log this.
 	}
+	*/
 }
 

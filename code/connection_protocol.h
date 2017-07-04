@@ -141,6 +141,9 @@ typedef PLATFORM_SLEEP_X_SECONDS(platform_sleep_x_seconds);
 #define PLATFORM_EXECUTE_SHELL_COMMAND(name) b32 name(char *script)
 typedef PLATFORM_EXECUTE_SHELL_COMMAND(platform_execute_shell_command);
 
+#define PLATFORM_PAUSE_THREAD(name) void name(void)
+typedef PLATFORM_PAUSE_THREAD(platform_pause_thread);
+
 //
 // NOTE(bjorn): Stuff the server provides to the platform.
 //
@@ -162,6 +165,7 @@ struct platform_api
 	platform_bytes_in_connection_queue	*bytes_in_connection_queue;
 	platform_read_from_connection				*read_from_connection;
 	platform_write_to_connection				*write_to_connection;
+	platform_pause_thread								*pause_thread;
 };
 
 #define MAX_NUMBER_OF_PLATFORM_FUNCTIONS 1024
@@ -190,7 +194,8 @@ SERVER_HANDLE_CONNECTION(handle_connection_stub)
 }
 
 #define SERVER_THIS_IS_MY_PROTOCOL(name) b32 name(void *content_sniff, \
-																									s32 content_sniff_size)
+																									s32 content_sniff_size, \
+																									connection_memory memory)
 typedef SERVER_THIS_IS_MY_PROTOCOL(server_this_is_my_protocol);
 SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol_stub)
 {

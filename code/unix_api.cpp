@@ -1,6 +1,8 @@
 #include "connection_protocol.h"
 
+#include <errno.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -185,3 +187,7 @@ extern "C" PLATFORM_READ_FROM_CONNECTION(read_from_connection)
 	}
 }
 
+extern "C" PLATFORM_PAUSE_THREAD(pause_thread)
+{
+	kill(getpid(), SIGSTOP);
+}
