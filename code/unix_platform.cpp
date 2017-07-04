@@ -589,7 +589,6 @@ main()
 																PROT_READ|PROT_WRITE, 
 																MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-					dlerror();
 					void *dll_handle = dlopen(memory.dll_path, RTLD_NOW);
 					if(dll_handle != memory.dll_handle)
 					{
@@ -603,20 +602,6 @@ main()
 						api_log_string(int_to_string((s64)dll_handle, empty_string));
 						api_log_string("\n");
 					}
-
-					//NOTE(bjorn): For thread debugging purposes.
-					kill(pid, SIGSTOP);
-
-					void *load_location = mmap(0, bytes_waiting, PROT_READ|PROT_WRITE,
-																		 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-					s32 bytes_read = recv(client_socket_handle, load_location, bytes_waiting,
-															 	MSG_PEEK);
-					if(bytes_waiting != bytes_read)
-					{
-						api_log_string("Bytes read not same as bytes in queue.\n");
-					}
-
-					b32 message_was_not_handled = true;
 					for(s32 protocol_index = 0;
 							protocol_index < protocol_count;
 							++protocol_index)
@@ -636,6 +621,27 @@ main()
 							api_log_string(int_to_string((s64)dll_handle, empty_string));
 							api_log_string("\n");
 						}
+					}
+
+					//NOTE(bjorn): For thread debugging purposes.
+					//kill(pid, SIGSTOP);
+
+					void *load_location = mmap(0, bytes_waiting, PROT_READ|PROT_WRITE,
+																		 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+					s32 bytes_read = recv(client_socket_handle, load_location, bytes_waiting,
+															 	MSG_PEEK);
+					if(bytes_waiting != bytes_read)
+					{
+						api_log_string("Bytes read not same as bytes in queue.\n");
+					}
+
+					b32 message_was_not_handled = true;
+					for(s32 protocol_index = 0;
+							protocol_index < protocol_count;
+							++protocol_index)
+					{
+						protocol_api protocol = protocols[protocol_index];
+
 						if(protocol.this_is_my_protocol(load_location, bytes_read)) 
 						{
 							protocol.handle_connection(client_socket_handle, pid, memory);
@@ -647,7 +653,6 @@ main()
 							//Some sort of priority value?
 							break;
 						}
-						dlclose(protocol.dll_handle);
 					}
 
 					if(message_was_not_handled)
@@ -662,6 +667,13 @@ main()
 					api_log_string(int_to_string(pid, empty_string));
 					api_log_string("\n");
 
+					for(s32 protocol_index = 0;
+							protocol_index < protocol_count;
+							++protocol_index)
+					{
+						dlclose(protocols[protocol_index].dll_handle);
+
+					}
 					dlclose(memory.dll_handle);
 					close(client_socket_handle);
 
