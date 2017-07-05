@@ -14,9 +14,80 @@
 #include <stdlib.h>
 
 #include <stdio.h>
+#include <stdarg.h>
+#include <time.h>
+
+//TODO(bjorn): Figure out how I want to let log_string know where to put the logs.
+global_variable char *global_log_output_file;
+
+__attribute__((constructor)) void
+initialize()
+{
+	global_log_output_file = 0;
+}
+
+internal_function void
+internal_log_string(char *format, va_list args)
+{
+	char *log_output_file;
+	if(global_log_output_file)
+	{
+		log_output_file = global_log_output_file;
+	}
+	else
+	{
+		log_output_file = "server.log";
+	}
+
+	FILE *file_handle;
+
+	s32 log_file_size = 0;
+	{
+		s32 unix_file_handle = open(log_output_file, O_RDONLY);
+		if(unix_file_handle != -1)
+		{
+			struct stat file_stats;
+			fstat(unix_file_handle, &file_stats);
+
+			log_file_size = file_stats.st_size;
+
+			close(unix_file_handle);
+		}
+	}
+
+	if(log_file_size > Megabytes(1))
+	{
+		file_handle	= fopen(log_output_file,"w");
+	}
+	else
+	{
+		file_handle	= fopen(log_output_file,"a+");
+	}
+
+
+	time_t rawtime;
+  time(&rawtime);
+	char *str = ctime(&rawtime);
+	s32 len = strlen(str);
+
+	fprintf(file_handle, "[%d][%.*s] ", getpid(), len-1, str);
+
+	vfprintf(file_handle, format, args);
+
+	fclose(file_handle);
+}
+
+extern "C" PLATFORM_SET_LOG_FILE(set_log_file)
+{
+	global_log_output_file = path_to_log_file;
+}
+
 extern "C" PLATFORM_LOG_STRING(log_string)
 {
-	printf(message);
+	va_list args;
+  va_start(args, format);
+
+	internal_log_string(format, args);
 }
 
 extern "C" PLATFORM_GET_LAST_EDIT_TIMESTAMP(get_last_edit_timestamp)
@@ -131,9 +202,7 @@ extern "C" PLATFORM_GET_NEXT_PART_OF_FILE(get_next_part_of_file)
 	else
 	{
 		log_string("get_next_part_of_file()\n");
-		log_string("Could not find file [");
-		log_string(result.file_path);
-		log_string("]\n");
+		log_string("Could not find file [%s]\n", result.file_path);
 		return result;
 	}
 }
@@ -142,7 +211,15 @@ extern "C" PLATFORM_BYTES_IN_CONNECTION_QUEUE(bytes_in_connection_queue)
 {
 	s32 bytes_in_queue;
 	ioctl(connection_id, FIONREAD, &bytes_in_queue);
-	return bytes_in_queue;
+
+	if(bytes_in_queue > 0)
+	{
+		return bytes_in_queue;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 extern "C" PLATFORM_SLEEP_X_SECONDS(sleep_x_seconds)
@@ -190,4 +267,22 @@ extern "C" PLATFORM_READ_FROM_CONNECTION(read_from_connection)
 extern "C" PLATFORM_PAUSE_THREAD(pause_thread)
 {
 	kill(getpid(), SIGSTOP);
+}
+
+extern "C" PLATFORM_KILL_THREAD(kill_thread)
+{
+	kill(getpid(), SIGKILL);
+}
+
+extern "C" PLATFORM_ASSERT(assert)
+{
+	if(!statement)
+	{
+		va_list args;
+		va_start(args, format);
+
+		internal_log_string(format, args);
+
+		kill_thread();
+	}
 }

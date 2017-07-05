@@ -270,7 +270,8 @@ all_api_function_names(char *path_to_file, string_matrix *result)
 
 internal_function void
 load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs, 
-							char *dir_of_dlls, connection_memory *conn_mem_temp, 
+							char *dir_of_dlls, char *dir_of_log_file, 
+							connection_memory *conn_mem_temp, 
 							protocol_api *protocols, s32 protocol_count)
 {
 	s32 protocol_index = 0; 
@@ -308,6 +309,7 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 				while(*copy_pointer != '\0'){ *dest_pointer++ = *copy_pointer++; }
 				*dest_pointer = '\0';
 			}
+			conn_mem_temp->api.set_log_file(dir_of_log_file);
 		}
 		else
 		{
@@ -422,7 +424,18 @@ main()
 													 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 	}
 
-	load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, 
+	char dir_of_log_file[FILE_PATH_MAX_SIZE] = {};
+	{
+		char *write_destination = dir_of_log_file;
+		char *copy_pointer = dir_of_exe;
+		while(*copy_pointer != '\0'){ *write_destination++ = *copy_pointer++; }
+
+		copy_pointer = "server.log";
+		while(*copy_pointer != '\0'){ *write_destination++ = *copy_pointer++; }
+		*write_destination = '\0';
+	}
+
+	load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, dir_of_log_file,
 								&connection_memory_template, protocols, protocol_count);
 
 	platform_log_string *api_log_string = 
@@ -581,7 +594,7 @@ main()
 																				 PROT_READ|PROT_WRITE, 
 																				 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-				load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, 
+				load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, dir_of_log_file, 
 											&connection_memory_template, protocols, protocol_count);
 
 				api_log_string = connection_memory_template.api.log_string;

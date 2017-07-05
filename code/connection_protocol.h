@@ -94,8 +94,15 @@ int_to_string(s32 number, char *string)
 //
 // NOTE(bjorn): Stuff the platform provides to the server.
 //
-#define PLATFORM_LOG_STRING(name) void name(char *message)
+#define PLATFORM_SET_LOG_FILE(name) void name(char *path_to_log_file)
+typedef PLATFORM_SET_LOG_FILE(platform_set_log_file);
+
+#define PLATFORM_LOG_STRING(name) void name(char *format, ...)
 typedef PLATFORM_LOG_STRING(platform_log_string);
+
+#define PLATFORM_SLEEP_X_SECONDS(name) void name(f32 seconds)
+typedef PLATFORM_SLEEP_X_SECONDS(platform_sleep_x_seconds);
+
 
 #if HANDMADE_SLOW
 #else
@@ -135,15 +142,17 @@ typedef PLATFORM_READ_FROM_CONNECTION(platform_read_from_connection);
 																										 s32 bytes_to_send)
 typedef PLATFORM_WRITE_TO_CONNECTION(platform_write_to_connection);
 
-#define PLATFORM_SLEEP_X_SECONDS(name) void name(f32 seconds)
-typedef PLATFORM_SLEEP_X_SECONDS(platform_sleep_x_seconds);
-
 #define PLATFORM_EXECUTE_SHELL_COMMAND(name) b32 name(char *script)
 typedef PLATFORM_EXECUTE_SHELL_COMMAND(platform_execute_shell_command);
 
 #define PLATFORM_PAUSE_THREAD(name) void name(void)
 typedef PLATFORM_PAUSE_THREAD(platform_pause_thread);
 
+#define PLATFORM_KILL_THREAD(name) void name(void)
+typedef PLATFORM_KILL_THREAD(platform_kill_thread);
+
+#define PLATFORM_ASSERT(name) void name(b32 statement, char *format, ...)
+typedef PLATFORM_ASSERT(platform_assert);
 //
 // NOTE(bjorn): Stuff the server provides to the platform.
 //
@@ -152,10 +161,11 @@ typedef PLATFORM_PAUSE_THREAD(platform_pause_thread);
 
 struct platform_api
 {
-	//IMPORTANT(bjorn): Changing the type or order of these two is synonymous 
+	//IMPORTANT(bjorn): Changing the type or order of these three is synonymous 
 	//with rebooting the server or having it crash in an unexpected way.
 	platform_log_string									*log_string; 
 	platform_sleep_x_seconds						*sleep_x_seconds;		  
+	platform_set_log_file								*set_log_file;
 
 	//These functions below are not supposed to be called from the main thread.
 	platform_execute_shell_command			*execute_shell_command;
@@ -166,6 +176,8 @@ struct platform_api
 	platform_read_from_connection				*read_from_connection;
 	platform_write_to_connection				*write_to_connection;
 	platform_pause_thread								*pause_thread;
+	platform_kill_thread								*kill_thread;
+	platform_assert											*assert;
 };
 
 #define MAX_NUMBER_OF_PLATFORM_FUNCTIONS 1024

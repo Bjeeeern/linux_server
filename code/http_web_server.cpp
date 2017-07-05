@@ -145,8 +145,6 @@ they_dont_differ(char *string, char *tag)
 
 extern "C" SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol)
 {
-	//memory.api.pause_thread();
-
 	char *string = (char *)content_sniff;
 	//NOTE(bjorn): This is just for simple HTTP.
 	while(*string != ' ')
@@ -171,12 +169,73 @@ extern "C" SERVER_THIS_IS_MY_PROTOCOL(this_is_my_protocol)
 
 	return they_dont_differ(string, "HTTP");
 }
+
+internal_function b32
+http_is(char *header, char *method)
+{
+	while(*method != '\0'){ if(*header++ != *method++) return false; }
+	return true;
+}
+
+struct static_memory
+{
+	char path[FILE_PATH_MAX_SIZE];
+};
 		
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
-	/*
-	s32 pid = getpid();
+	memory.api.pause_thread();
 
+	memory.api.log_string("hej\n");
+
+	memory.api.assert(memory.storage_size/2 > sizeof(static_memory), "Thread memory is"
+										" too small!");
+
+	static_memory *stat_mem = (static_memory*)memory.storage;
+
+	memory.storage = (void *)(((u8*)memory.storage) + memory.storage_size/2);
+	memory.storage_size = memory.storage_size/2;
+
+	void *data_in = memory.storage;
+	s32 data_in_size = memory.storage_size;
+
+
+	b32 wait_for_response = true;
+	b32 one_response_handled = false;
+	while(wait_for_response)
+	{
+		s32 bytes_in_queue = memory.api.bytes_in_connection_queue(connection_id);
+		if(!bytes_in_queue)
+		{
+			continue;
+			if(!one_response_handled)
+			{
+				return;
+			}
+		}
+
+		if(bytes_in_queue > data_in_size)
+		{
+			//TODO(bjorn): Send back error that the header is too big.
+			return;
+		}
+		memory.api.read_from_connection(connection_id, data_in, bytes_in_queue);
+
+		char *header = (char*)data_in;
+
+		if(http_is(header, "GET"))
+		{
+			memory.api.log_string("%.*s\n", bytes_in_queue, header);
+		}
+		//if(header_field_is(header, "this header here", "oh wadda you know"))
+		//if(get_string_value_of_header_field(header, "blashblash", &string))
+		//if(get_s32_value_of_header_field(header, "blashblash", &integer))
+		//if(get_f32_value_of_header_field(header, "blashblash", &real))
+
+		one_response_handled = true;
+		wait_for_response = false;
+	}
+	/*
 KEEP_ALIVE:
 	s32 bytes_in_queue = 0;
 	f32 seconds_waited = 0.0f;
