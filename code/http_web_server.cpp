@@ -236,6 +236,75 @@ append_to_string(char *string, char *appendix)
 	*string = '\0';
 }
 
+internal_function b32
+not_end_of_url(char c)
+{
+	return !( c == ' ' || c == '?' || c == '#' );
+}
+
+internal_function b32
+path_is_a_directory(char *header)
+{
+	while(*header++ != ' '){}
+	while(not_end_of_url(header[0]))
+	{
+		++header;
+	}
+	return header[-1] == '/';
+}
+
+internal_function void
+append_path_to_string(char *string, char *header)
+{
+	while(*header++ != ' '){}
+	++header;
+
+	char *copy_pointer = header;
+	char *dest_pointer = string;
+	while(*dest_pointer != '\0'){ ++dest_pointer; }
+	while(not_end_of_url(copy_pointer[0])){ *dest_pointer++ = *copy_pointer++; }
+}
+
+internal_function b32
+path_containts_either_file_ending(char *header, char *file_formats)
+{
+	//NOTE(bjorn): File-format are listed as such: ".html .js .css .ico .png .jpg".
+	while(*header++ != ' '){}
+	while(not_end_of_url(*header)){ ++header; }
+	while(*header != '.'){ --header; }
+	++header;
+
+	while(*file_formats++ != '.'){ }
+
+	while(*file_formats != '\0')
+	{
+		b32 they_are_the_same = true;
+		{
+			char *header_file_type = header;
+			char *test_file_type = file_formats;
+			while(!(*test_file_type == ' ' || *test_file_type == '\0'))
+			{ 
+				if(*test_file_type != *header_file_type)
+				{
+					they_are_the_same = false;
+					break;
+				}
+				++header_file_type;
+				++test_file_type;
+			}
+		}
+
+		if(they_are_the_same)
+		{
+			return true;
+		}
+
+		while(!(*file_formats == '.' || *file_formats == '\0')){ ++file_formats; }
+		++file_formats;
+	}
+	return false;
+}
+
 struct static_memory
 {
 	char path[FILE_PATH_MAX_SIZE];
@@ -243,7 +312,7 @@ struct static_memory
 		
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
-	//memory.api.pause_thread();
+	memory.api.pause_thread();
 
 	memory.api.assert(memory.storage_size/2 > sizeof(static_memory), "Thread memory is"
 										" too small!");
@@ -258,37 +327,34 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 
 
 	b32 wait_for_response = true;
-	b32 one_response_handled = false;
 	f32 seconds_waited = 0.0f;
 	while(wait_for_response)
 	{
 		s32 bytes_in_queue = memory.api.bytes_in_connection_queue(connection_id);
-		if(!bytes_in_queue)
+		while(!bytes_in_queue)
 		{
 			memory.api.sleep_x_seconds(1.0f/60.0f);
 			seconds_waited += 1.0f/60.0f;
 
 			if(seconds_waited > 10.0f)
 			{
-				return;
-			}
-			if(!one_response_handled)
-			{
+				//TODO(bjorn): Respond with 408 Request Timeout before quitting.
 				return;
 			}
 
-			continue;
+			bytes_in_queue = memory.api.bytes_in_connection_queue(connection_id);
 		}
 
 		if(bytes_in_queue > data_in_size)
 		{
-			//TODO(bjorn): Send back error that the header is too big.
+			//TODO(bjorn): Send back error 431 Request Header Fields Too Large OR 
+			//														 413 Payload Too Large.
 			return;
 		}
 		memory.api.read_from_connection(connection_id, data_in, bytes_in_queue);
 
 		char *header = (char*)data_in;
-		memory.api.log_string("%.*s\n", bytes_in_queue, header);
+		memory.api.log_string("\n%.*s\n", bytes_in_queue, header);
 
 		if(header_field_is(header, "connection", "keep-alive"))
 		{
@@ -301,6 +367,21 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 
 		if(http_is(header, "GET"))
 		{
+			append_to_string(stat_mem->path, memory.path_to_webroot);
+
+			if(path_is_a_directory(header))
+			{
+				append_to_string(stat_mem->path, "index.html");
+			}
+			else if(path_containts_either_file_ending(header, 
+																								".html .js .css .ico .png .jpg"))
+			{
+				append_path_to_string(stat_mem->path, header);
+			}
+			else
+			{
+				//TODO(bjorn): Respond with a 404 file not found page.
+			}
 		}
 		else if(http_is(header, "POST"))
 		{
@@ -314,11 +395,13 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 				return;
 			}
 		}
+		else
+		{
+			//TODO(bjorn): Respond with 500 Internal Server Error or something.
+		}
 		//if(get_string_value_of_header_field(header, "blashblash", &string))
 		//if(get_s32_value_of_header_field(header, "blashblash", &integer))
 		//if(get_f32_value_of_header_field(header, "blashblash", &real))
-
-		one_response_handled = true;
 	}
 	/*
 KEEP_ALIVE:
