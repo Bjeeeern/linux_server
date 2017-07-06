@@ -177,6 +177,65 @@ http_is(char *header, char *method)
 	return true;
 }
 
+internal_function b32
+loose_fit(char *header, char *tag)
+{
+	while(*tag != '\0')
+	{ 
+		if(*header != *tag) 
+		{
+			if(!(
+					 (*header - 'A' == *tag - 'a') ||
+					 (*header - 'a' == *tag - 'A')
+					 ))
+			{
+				return false; 
+			}
+		}
+
+		++header;
+		++tag;
+	}
+	return true;
+}
+
+internal_function b32
+header_field_is(char *header, char *field, char *value)
+{
+	while(true)
+	{
+		while(!loose_fit(header, "\r\n")){ ++header; }
+		header += 2;
+
+		if(loose_fit(header, field))
+		{
+			while(*header++ != ' '){}
+
+			return loose_fit(header, value);
+		}
+
+		if(loose_fit(header, "\r\n"))
+		{
+			return false;
+		}
+	}
+}
+
+internal_function b32 
+path_is(char *header, char *path)
+{
+	while(*header++ != ' '){}
+	return loose_fit(header, path);
+}
+
+internal_function void 
+append_to_string(char *string, char *appendix)
+{
+	while(*string != '\0'){ string++; }
+	while(*appendix != '\0'){ *string++ = *appendix++; }
+	*string = '\0';
+}
+
 struct static_memory
 {
 	char path[FILE_PATH_MAX_SIZE];
@@ -184,9 +243,7 @@ struct static_memory
 		
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
-	memory.api.pause_thread();
-
-	memory.api.log_string("hej\n");
+	//memory.api.pause_thread();
 
 	memory.api.assert(memory.storage_size/2 > sizeof(static_memory), "Thread memory is"
 										" too small!");
@@ -202,16 +259,25 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 
 	b32 wait_for_response = true;
 	b32 one_response_handled = false;
+	f32 seconds_waited = 0.0f;
 	while(wait_for_response)
 	{
 		s32 bytes_in_queue = memory.api.bytes_in_connection_queue(connection_id);
 		if(!bytes_in_queue)
 		{
-			continue;
+			memory.api.sleep_x_seconds(1.0f/60.0f);
+			seconds_waited += 1.0f/60.0f;
+
+			if(seconds_waited > 10.0f)
+			{
+				return;
+			}
 			if(!one_response_handled)
 			{
 				return;
 			}
+
+			continue;
 		}
 
 		if(bytes_in_queue > data_in_size)
@@ -222,18 +288,37 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 		memory.api.read_from_connection(connection_id, data_in, bytes_in_queue);
 
 		char *header = (char*)data_in;
+		memory.api.log_string("%.*s\n", bytes_in_queue, header);
+
+		if(header_field_is(header, "connection", "keep-alive"))
+		{
+			wait_for_response = true;
+		}
+		else
+		{
+			wait_for_response = false;
+		}
 
 		if(http_is(header, "GET"))
 		{
-			memory.api.log_string("%.*s\n", bytes_in_queue, header);
 		}
-		//if(header_field_is(header, "this header here", "oh wadda you know"))
+		else if(http_is(header, "POST"))
+		{
+			if(path_is(header, "/github-push-event"))
+			{
+				char *command = stat_mem->path;
+				append_to_string(command, "cd ");
+				append_to_string(command, memory.path_to_webroot);
+				append_to_string(command, "../code && git pull && make build");
+				memory.api.execute_shell_command(command);
+				return;
+			}
+		}
 		//if(get_string_value_of_header_field(header, "blashblash", &string))
 		//if(get_s32_value_of_header_field(header, "blashblash", &integer))
 		//if(get_f32_value_of_header_field(header, "blashblash", &real))
 
 		one_response_handled = true;
-		wait_for_response = false;
 	}
 	/*
 KEEP_ALIVE:

@@ -227,8 +227,19 @@ extern "C" PLATFORM_SLEEP_X_SECONDS(sleep_x_seconds)
 	usleep((useconds_t)(1000.0f * 1000.0f * seconds));
 }
 
+internal_function void 
+append_to_string(char *string, char *appendix)
+{
+	while(*string != '\0'){ string++; }
+	while(*appendix != '\0'){ *string++ = *appendix++; }
+	*string = '\0';
+}
+
 extern "C" PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 {
+	append_to_string(script, " >> ");
+	append_to_string(script, global_log_output_file);
+
 	s32 status_code = system(script);
 	if(status_code == 0)
 	{

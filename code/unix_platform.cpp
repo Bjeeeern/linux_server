@@ -640,6 +640,8 @@ main()
 
 						if(pid == 0)
 						{
+							api_log_string("Connection started\n");
+
 							pid = getpid();
 							//NOTE(bjorn): For thread debugging purposes.
 							//kill(pid, SIGSTOP);
@@ -669,6 +671,11 @@ main()
 							//TODO(bjorn): What is the right thing to do here? Should
 							//multiple protocols be able to respond to a single connection?
 							//Some sort of priority value?
+							//
+							// In the meantime I have decided to go with one thread per
+							// protocol per connection so that it is a 1-to-1 conversation
+							// seen from the clients perspective.
+
 							for(s32 protocol_index = 0;
 									protocol_index < protocol_count;
 									++protocol_index)
@@ -678,21 +685,22 @@ main()
 							}
 							dlclose(memory.dll_handle);
 
-							api_log_string("Connection ended for pid:");
-							char empty_string[256];
-							api_log_string(int_to_string(pid, empty_string));
-							api_log_string("\n");
+							api_log_string("Connection ended\n");
+
+							close(client_socket_handle);
 
 							kill(pid, SIGKILL);
 						}
+						break;
 					}
 					if(message_was_not_handled)
 					{
-						api_log_string("No fitting protocol was found");
+						api_log_string("No fitting protocol was found\n");
+
+						close(client_socket_handle);
 					}
 				}
 			}
-			close(client_socket_handle);
 		}
 	}
 	return 0;
