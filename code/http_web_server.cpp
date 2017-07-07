@@ -265,6 +265,7 @@ append_path_to_string(char *string, char *header)
 	while(not_end_of_url(copy_pointer[0])){ *dest_pointer++ = *copy_pointer++; }
 }
 
+//TODO(bjorn): Make this function cleaner written.
 internal_function b32
 path_containts_either_file_ending(char *header, char *file_formats)
 {
@@ -276,7 +277,7 @@ path_containts_either_file_ending(char *header, char *file_formats)
 
 	while(*file_formats++ != '.'){ }
 
-	while(*file_formats != '\0')
+	while(true)
 	{
 		b32 they_are_the_same = true;
 		{
@@ -299,10 +300,23 @@ path_containts_either_file_ending(char *header, char *file_formats)
 			return true;
 		}
 
-		while(!(*file_formats == '.' || *file_formats == '\0')){ ++file_formats; }
-		++file_formats;
+		while(!(*file_formats == '.' || *file_formats == '\0')) { ++file_formats; }
+
+		if(*file_formats == '\0'){ return false; }
+		else { ++file_formats; }
 	}
 	return false;
+}
+
+internal_function s32
+string_size(char *string)
+{
+	s32 size_of_string = 0;
+	while(*string++ != '\0')
+	{
+		size_of_string += 1;
+	}
+	return size_of_string;
 }
 
 struct static_memory
@@ -312,19 +326,15 @@ struct static_memory
 		
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
-	memory.api.pause_thread();
-
-	memory.api.assert(memory.storage_size/2 > sizeof(static_memory), "Thread memory is"
-										" too small!");
+	//memory.api.pause_thread();
 
 	static_memory *stat_mem = (static_memory*)memory.storage;
 
-	memory.storage = (void *)(((u8*)memory.storage) + memory.storage_size/2);
-	memory.storage_size = memory.storage_size/2;
+	void *data_out = (void *)(((u8*)memory.storage) + memory.storage_size/2);
+	s32 data_out_size = memory.storage_size/2;
 
-	void *data_in = memory.storage;
-	s32 data_in_size = memory.storage_size;
-
+	void *data_in = (void *)&(stat_mem[1]);
+	s32 data_in_size = memory.storage_size/2 - sizeof(static_memory);
 
 	b32 wait_for_response = true;
 	f32 seconds_waited = 0.0f;
@@ -373,14 +383,106 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 			{
 				append_to_string(stat_mem->path, "index.html");
 			}
-			else if(path_containts_either_file_ending(header, 
-																								".html .js .css .ico .png .jpg"))
+			else if(path_containts_either_file_ending(header, ".html .js .css .ico "
+																								".png .jpg .jpeg"))
 			{
 				append_path_to_string(stat_mem->path, header);
 			}
 			else
 			{
 				//TODO(bjorn): Respond with a 404 file not found page.
+				return;
+			}
+
+			char header_out[1024] = {};
+
+			loaded_file file = memory.api.open_file(stat_mem->path, 
+																							data_out_size, data_out);
+
+			if(file.total_file_size)
+			{
+				append_to_string(header_out, 
+												 "HTTP/1.1 200 OK\r\n"
+												 "Content-Length: ");
+
+				{
+					char size_in_text[256]; 
+					int_to_string(file.total_file_size, size_in_text);
+					append_to_string(header_out, size_in_text);
+				}
+
+				append_to_string(header_out, "\r\n");
+
+				if(header_field_is(header, "connection", "keep-alive"))
+				{
+					append_to_string(header_out, "Connection: keep-alive\r\n");
+				}
+				else
+				{
+					append_to_string(header_out, "Connection: close\r\n");
+				}
+
+				if(path_containts_either_file_ending(header, ".html") ||
+					 path_is_a_directory(header))
+				{
+					append_to_string(header_out, "Content-Type: text/html; charset=utf-8\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".ico"))
+				{
+					append_to_string(header_out, "Content-Type: image/ico\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".css"))
+				{
+					append_to_string(header_out, "Content-Type: text/css; charset=utf-8\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".js"))
+				{
+					append_to_string(header_out, 
+													 "Content-Type: application/javascript; charset=utf-8\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".png"))
+				{
+					append_to_string(header_out, "Content-Type: image/png\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".jpg .jpeg"))
+				{
+					append_to_string(header_out, "Content-Type: image/jpeg\r\n");
+				}
+				else
+				{
+					memory.api.assert(false, "This path should never be reached.");
+				}
+				append_to_string(header_out, "\r\n");
+
+				s32 header_out_size = string_size(header_out);
+
+				memory.api.write_to_connection(connection_id, 
+																			 (void *)header_out, header_out_size); 
+
+				memory.api.write_to_connection(connection_id, 
+																			 file.content, file.content_size); 
+
+				{
+					memory.api.log_string("\n%s\n", header_out);
+					if(path_containts_either_file_ending(header, ".html .css .js") ||
+						 path_is_a_directory(header))
+					{
+						memory.api.log_string("\n%.*s\n", 
+																	256, (char *)file.content);
+					}
+				}
+
+				while(file.there_is_more_content)
+				{
+					file = memory.api.get_next_part_of_file(file);
+
+					memory.api.write_to_connection(connection_id, 
+																				 file.content, file.content_size); 
+				}
+			}
+			else
+			{
+				//TODO(bjorn): 404 File Not Found.
 			}
 		}
 		else if(http_is(header, "POST"))
@@ -399,150 +501,14 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 		{
 			//TODO(bjorn): Respond with 500 Internal Server Error or something.
 		}
-		//if(get_string_value_of_header_field(header, "blashblash", &string))
-		//if(get_s32_value_of_header_field(header, "blashblash", &integer))
-		//if(get_f32_value_of_header_field(header, "blashblash", &real))
-	}
-	/*
-KEEP_ALIVE:
-	s32 bytes_in_queue = 0;
-	f32 seconds_waited = 0.0f;
-	while(bytes_in_queue == 0)
-	{
-		ioctl(client_socket_handle, FIONREAD, &bytes_in_queue);
-		if(bytes_in_queue == 0)
+
+		u8 *eraser = (u8 *)memory.storage;
+		for(s32 eraser_index = 0;
+				eraser_index < memory.storage_size;
+				++eraser_index)
 		{
-			usleep(16000);
-			seconds_waited += 0.0167;
-			if(seconds_waited > 10.0f)
-			{
-				return;
-			}
+			eraser[eraser_index] = 0;
 		}
 	}
-
-	u8* data_received = (u8*)mmap(0, bytes_in_queue + 1,
-																PROT_READ | PROT_WRITE,
-																MAP_PRIVATE | MAP_ANONYMOUS,
-																-1, 0);
-
-	s32 bytes_received = recv(client_socket_handle, (void *)data_received, 
-												bytes_in_queue, 0);
-	//NOTE(bjorn): Make it a string so i can use it with my string functions.
-	data_received[bytes_in_queue] = '\0';
-
-	Assert(bytes_in_queue == bytes_received);
-
-	printf("\t[----received message\n%.*s\n\t[----\n\tpid: %i\n\t[----\n", 
-				 bytes_received, data_received, pid);
-
-
-	char path_to_executable[1024] = {};
-	getcwd(path_to_executable, sizeof(path_to_executable));
-
-	append_to_string(path_to_executable, "/../webroot");
-	char *absolute_path_to_webroot = path_to_executable;
-
-	if(get_line_nr_at_tag((char *)data_received, "GET") == 0)
-	{
-		char *GET_request_path = get_string_between_tags((char *)data_received, 
-																										 "GET ", " ");
-
-		append_to_string(absolute_path_to_webroot, GET_request_path);
-		if( ! string_does_contain_tag(GET_request_path, "."))
-		{
-			append_to_string(absolute_path_to_webroot, "index.html");
-		}
-		munmap(GET_request_path, string_size(GET_request_path)+1);
-
-		char *absolute_request_path = absolute_path_to_webroot;
-
-
-		s32 file_handle;
-		struct stat file_stats;
-
-		file_handle = open(absolute_request_path, O_RDONLY);
-		fstat(file_handle, &file_stats);
-
-		s32 size_of_file = file_stats.st_size;
-		void *file = mmap(0, size_of_file, PROT_READ, MAP_PRIVATE, file_handle, 0);
-
-		if(file)
-		{
-			char GET_response[1024] = 
-				"HTTP/1.1 200 OK\n"
-				"Content-Length: ";
-
-			char *size_in_text = int_to_string(size_of_file);
-			append_to_string(GET_response, size_in_text);
-			munmap(size_in_text, string_size(size_in_text)+1);
-
-			append_to_string(GET_response, "\n");
-
-			if(string_does_contain_tag((char*)data_received, "keep-alive"))
-			{
-				append_to_string(GET_response, "Connection: keep-alive\n");
-			}
-			else
-			{
-				append_to_string(GET_response, "Connection: close\n");
-			}
-
-		  printf("\tAbsolute request path: %s\n\t[----\n", absolute_request_path);
-			if(string_does_contain_tag(absolute_request_path, ".html"))
-			{
-				append_to_string(GET_response, "Content-Type: text/html; charset=utf-8\n");
-			}
-			else if(string_does_contain_tag(absolute_request_path, ".ico"))
-			{
-				append_to_string(GET_response, "Content-Type: image/ico\n");
-			}
-			else if(string_does_contain_tag(absolute_request_path, ".css"))
-			{
-				append_to_string(GET_response, "Content-Type: text/css; charset=utf-8\n");
-			}
-			else if(string_does_contain_tag(absolute_request_path, ".js"))
-			{
-				append_to_string(GET_response, 
-												 "Content-Type: application/javascript; charset=utf-8\n");
-			}
-			else
-			{
-				//TODO(bjorn): Log this.
-			}
-			append_to_string(GET_response, "\n");
-
-			s32 size_of_response_header = string_size(GET_response);
-
-			write(client_socket_handle, GET_response, size_of_response_header);
-
-			printf("\tGET response:\n%s\n", GET_response);
-			if(string_does_contain_tag(absolute_request_path, ".html"))
-			{
-				printf("\tGET response html content:\n%.*s\n", size_of_file, file);
-			}
-
-			write(client_socket_handle, file, size_of_file);
-
-			close(file_handle);
-
-			munmap(file, size_of_file);
-		}
-		else
-		{
-			//TODO(bjorn): 404 file not found!
-		}
-
-		if(string_does_contain_tag((char*)data_received, "keep-alive"))
-		{
-			munmap(data_received, bytes_in_queue + 1);
-			goto KEEP_ALIVE;
-		}
-	}
-	else
-	{
-		//TODO(bjorn): Log this.
-	}
-	*/
 }
 

@@ -58,12 +58,14 @@ typedef u32 b32;
 #define array_count(array) (sizeof(array) / sizeof((array)[0]))
 
 // TODO(bjorn): swap, min, max...   macros???
-char *
+void
 int_to_string(s32 number, char *string)
 {
 	if(number == 0)
 	{
-		return (char *)"0";
+		string[0] = '0';
+		string[1] = '\0';
+		return;
 	}
 
 	char buffer[256] = {};
@@ -87,7 +89,6 @@ int_to_string(s32 number, char *string)
 	{
 		string[copy_index--] = buffer[buffer_index++];
 	}
-	return string;
 }
 
 
