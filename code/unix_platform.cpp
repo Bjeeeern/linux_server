@@ -18,6 +18,8 @@
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#else // not __APPLE__
+#include <dlfcn.h>
 #endif
 
 #include <signal.h>
@@ -341,8 +343,8 @@ main()
 	char dir_of_exe[FILE_PATH_MAX_SIZE] = {};
 
 	{
-#ifdef __APPLE__
 		u32 size = FILE_PATH_MAX_SIZE;
+#ifdef __APPLE__
 		if (_NSGetExecutablePath(dir_of_exe, &size) != 0) {
 			// Buffer size is too small.
 			printf("_NSGetExecutablePath() failed\n");
