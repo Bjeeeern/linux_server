@@ -199,6 +199,14 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	//memory.api.pause_thread();
 
+	u8 *eraser = (u8 *)memory.storage;
+	for(s32 eraser_index = 0;
+				eraser_index < memory.storage_size;
+				++eraser_index)
+	{
+		eraser[eraser_index] = 0;
+	}
+
 	static_memory *stat_mem = (static_memory*)memory.storage;
 
 	void *data_out = (void *)(((u8*)memory.storage) + memory.storage_size/2);
@@ -361,6 +369,7 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 			if(path_is(header, "/github-push-event"))
 			{
 				char *command = stat_mem->path;
+				command[0] = '\0';
 				append_to_string(command, "cd ");
 				append_to_string(command, memory.path_to_webroot);
 				append_to_string(command, "../code && git pull ");
