@@ -371,7 +371,6 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 				append_to_string(command, memory.path_to_webroot);
 				append_to_string(command, "../code && make build");
 				memory.api.execute_shell_command(command);
-				return;
 			}
 		}
 		else
