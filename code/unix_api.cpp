@@ -243,6 +243,7 @@ extern "C" PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 	s32 status_code = system(script);
 	if(status_code == 0)
 	{
+		log_string("%s\n", script);
 		return true;
 	}
 

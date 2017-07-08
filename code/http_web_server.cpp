@@ -199,6 +199,8 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	//memory.api.pause_thread();
 
+	//TODO(bjorn): The os should provide a memwipe function and give the memory
+	//pre-wiped to the process.
 	u8 *eraser = (u8 *)memory.storage;
 	for(s32 eraser_index = 0;
 				eraser_index < memory.storage_size;
