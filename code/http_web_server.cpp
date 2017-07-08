@@ -256,6 +256,23 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 			wait_for_response = false;
 		}
 
+		if(path_is(header, "/github-push-event"))
+		{
+			char *command = stat_mem->path;
+			command[0] = '\0';
+			append_to_string(command, "cd ");
+			append_to_string(command, memory.path_to_webroot);
+			append_to_string(command, "../code && git pull ");
+			memory.api.execute_shell_command(command);
+
+			command[0] = '\0';
+			append_to_string(command, "cd ");
+			append_to_string(command, memory.path_to_webroot);
+			append_to_string(command, "../code && make build");
+			memory.api.execute_shell_command(command);
+			return;
+		}
+
 		if(http_is(header, "GET"))
 		{
 			append_to_string(stat_mem->path, memory.path_to_webroot);
@@ -368,21 +385,6 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 		}
 		else if(http_is(header, "POST"))
 		{
-			if(path_is(header, "/github-push-event"))
-			{
-				char *command = stat_mem->path;
-				command[0] = '\0';
-				append_to_string(command, "cd ");
-				append_to_string(command, memory.path_to_webroot);
-				append_to_string(command, "../code && git pull ");
-				memory.api.execute_shell_command(command);
-
-				command[0] = '\0';
-				append_to_string(command, "cd ");
-				append_to_string(command, memory.path_to_webroot);
-				append_to_string(command, "../code && make build");
-				memory.api.execute_shell_command(command);
-			}
 		}
 		else
 		{

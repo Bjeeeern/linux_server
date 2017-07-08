@@ -489,11 +489,15 @@ main()
 																			&client_address_lenght);
 		if(client_socket_handle == -1)
 		{
+			s32 debug_counter = 0;
+			printf("%d\n", ++debug_counter);
+
 			api_sleep_x_seconds(0.016f); 
 
 			string_matrix current_dll_filenames = {};
 			{
 				determine_area_for_dll_filename(dir_of_exe, &current_dll_filenames);
+				printf("%d\n", ++debug_counter);
 
 				b32 no_dll_files = 
 					(current_dll_filenames.lines * current_dll_filenames.max_line_width) == 0;
@@ -501,14 +505,17 @@ main()
 				{
 					continue;
 				}
+				printf("%d\n", ++debug_counter);
 
 				current_dll_filenames.strings = 
 					(char *)mmap(0, 
 											 current_dll_filenames.lines * 
 											 current_dll_filenames.max_line_width, 
 											 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+				printf("%d\n", ++debug_counter);
 
 				all_dyn_lib_names_in_dir(dir_of_exe, &current_dll_filenames);
+				printf("%d\n", ++debug_counter);
 			}
 
 			b32 the_file_name_has_changed = true;
@@ -522,6 +529,7 @@ main()
 					if(string_matches_tag(current_dll_filenames.at(current_lib_index, 0), 
 																		"lib_unix_api"))
 					{ 
+						printf("%d\n", ++debug_counter);
 						lib_unix_api_dll_file_was_found = true;
 						break;
 					}
@@ -541,6 +549,7 @@ main()
 					current_dll_filenames.free();
 					continue;
 				}
+				printf("%d\n", ++debug_counter);
 
 				s32 past_lib_index;
 				for(past_lib_index = 0;
@@ -552,6 +561,7 @@ main()
 						break;
 					}
 				}
+				printf("%d\n", ++debug_counter);
 
 
 				the_file_name_has_changed = 
@@ -564,18 +574,22 @@ main()
 
 			if(the_file_name_has_changed)
 			{
+				printf("%d\n", ++debug_counter);
 				dll_filenames.free();
 				dll_filenames = current_dll_filenames;
 
 				api_funcs.free();
 				{
 					determine_area_for_api_funcs(full_path_api_names_file, &api_funcs);
+					printf("%d\n", ++debug_counter);
 
 					api_funcs.strings = 
 						(char *)mmap(0, api_funcs.lines * api_funcs.max_line_width, 
 												 PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+					printf("%d\n", ++debug_counter);
 
 					all_api_function_names(full_path_api_names_file, &api_funcs);
+					printf("%d\n", ++debug_counter);
 				}
 
 				{
@@ -584,6 +598,7 @@ main()
 							++protocol_index)
 					{
 						dlclose(protocols[protocol_index].dll_handle);
+						printf("%d\n", ++debug_counter);
 					}
 					munmap(protocols, sizeof(protocol_api) * protocol_count);
 					protocols = 0;
@@ -595,14 +610,17 @@ main()
 				protocols = (protocol_api *)mmap(0, sizeof(protocol_api)* protocol_count,
 																				 PROT_READ|PROT_WRITE, 
 																				 MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+				printf("%d\n", ++debug_counter);
 
 				load_dyn_libs(dll_filenames, api_funcs, dir_of_exe, dir_of_log_file, 
 											&connection_memory_template, protocols, protocol_count);
+				printf("%d\n", ++debug_counter);
 
 				api_log_string = connection_memory_template.api.log_string;
 				api_sleep_x_seconds = connection_memory_template.api.sleep_x_seconds;
 
 				api_log_string("Dynamic libraries reloaded.\n");
+				printf("%d\n", ++debug_counter);
 			}
 			else
 			{
