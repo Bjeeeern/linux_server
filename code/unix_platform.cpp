@@ -695,13 +695,13 @@ main()
 						}
 						break;
 					}
-					if(message_was_not_handled)
-					{
-						api_log_string("No fitting protocol was found\n");
-						api_log_string("\n%.*s\n", bytes_read, load_location);
+				}
+				if(message_was_not_handled)
+				{
+					api_log_string("No fitting protocol was found\n");
+					api_log_string("\n%.*s\n", bytes_read, load_location);
 
-						close(client_socket_handle);
-					}
+					close(client_socket_handle);
 				}
 			}
 		}
