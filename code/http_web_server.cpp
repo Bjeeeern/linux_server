@@ -363,7 +363,13 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 				char *command = stat_mem->path;
 				append_to_string(command, "cd ");
 				append_to_string(command, memory.path_to_webroot);
-				append_to_string(command, "../code && git pull && make build");
+				append_to_string(command, "../code && git pull ");
+				memory.api.execute_shell_command(command);
+
+				command[0] = '\0';
+				append_to_string(command, "cd ");
+				append_to_string(command, memory.path_to_webroot);
+				append_to_string(command, "../code && make build");
 				memory.api.execute_shell_command(command);
 				return;
 			}
