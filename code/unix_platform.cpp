@@ -283,7 +283,6 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 			dyn_lib_file_index < dll_filenames.lines;
 			++dyn_lib_file_index)
 	{
-		printf("%d\n", ++debug_counter);
 		char *dyn_lib_file = dll_filenames.at(dyn_lib_file_index, 0);
 		printf("%s\n", dyn_lib_file);
 
@@ -306,16 +305,23 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 					api_function_index < api_funcs.lines;
 					++api_function_index)
 			{
+				printf("%d\n", ++debug_counter);
+
 				conn_mem_temp->api_function_pointers[api_function_index] = 
 					dlsym(dyn_lib_handle, api_funcs.at(api_function_index, 0));
+				printf("%s\n", api_funcs.at(api_function_index, 0));
 
 				conn_mem_temp->dll_handle = dyn_lib_handle;
 				char *copy_pointer = absolute_path_to_dyn_lib_file;
 				char *dest_pointer = conn_mem_temp->dll_path;
 				while(*copy_pointer != '\0'){ *dest_pointer++ = *copy_pointer++; }
 				*dest_pointer = '\0';
+
+				printf("%s\n", api_funcs.at(api_function_index, 0));
 			}
+			printf("%d\n", ++debug_counter);
 			conn_mem_temp->api.set_log_file(dir_of_log_file);
+			printf("%d\n", ++debug_counter);
 		}
 		else
 		{
