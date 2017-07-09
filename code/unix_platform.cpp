@@ -587,6 +587,8 @@ main()
 					all_api_function_names(full_path_api_names_file, &api_funcs);
 				}
 
+				connection_memory_template.api.sleep_x_seconds(1.0f/60.0f);
+
 				{
 					for(s32 protocol_index = 0;
 							protocol_index < protocol_count;
