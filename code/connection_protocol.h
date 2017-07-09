@@ -109,7 +109,6 @@ typedef PLATFORM_SLEEP_X_SECONDS(platform_sleep_x_seconds);
 #else
 #endif
 
-
 struct loaded_file
 {
 	char *file_path;

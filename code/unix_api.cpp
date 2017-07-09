@@ -24,6 +24,14 @@ __attribute__((constructor)) void
 initialize()
 {
 	global_log_output_file = 0;
+	printf("initializing works on linux");
+}
+
+extern "C" PLATFORM_SET_LOG_FILE(set_log_file)
+{
+	printf("can i call?");
+	global_log_output_file = path_to_log_file;
+	printf("i could!");
 }
 
 internal_function void
@@ -75,11 +83,6 @@ internal_log_string(char *format, va_list args)
 	vfprintf(file_handle, format, args);
 
 	fclose(file_handle);
-}
-
-extern "C" PLATFORM_SET_LOG_FILE(set_log_file)
-{
-	global_log_output_file = path_to_log_file;
 }
 
 extern "C" PLATFORM_LOG_STRING(log_string)
