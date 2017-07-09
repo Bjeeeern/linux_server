@@ -282,7 +282,6 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 			++dyn_lib_file_index)
 	{
 		char *dyn_lib_file = dll_filenames.at(dyn_lib_file_index, 0);
-		printf("%s\n", dyn_lib_file);
 
 		void *dyn_lib_handle;
 		char absolute_path_to_dyn_lib_file[FILE_PATH_MAX_SIZE] = {};
@@ -340,7 +339,6 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 				protocol_index += 1;
 			}
 		}
-		printf("%s\n", dyn_lib_file);
 	}
 }
 
