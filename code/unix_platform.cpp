@@ -298,6 +298,11 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 
 			dyn_lib_handle = dlopen(absolute_path_to_dyn_lib_file, RTLD_NOW);
 		}
+		if(dyn_lib_handle == 0)
+		{
+			printf("%s\n", absolute_path_to_dyn_lib_file);
+			printf("failed to load lib\n");
+		}
 
 		if(string_matches_tag(dyn_lib_file, "lib_unix_api"))
 		{
@@ -310,6 +315,10 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 				conn_mem_temp->api_function_pointers[api_function_index] = 
 					dlsym(dyn_lib_handle, api_funcs.at(api_function_index, 0));
 				printf("%s\n", api_funcs.at(api_function_index, 0));
+				if(conn_mem_temp->api_function_pointers[api_function_index] == 0)
+				{
+					printf("failed to load symbol\n");
+				}
 
 				conn_mem_temp->dll_handle = dyn_lib_handle;
 				char *copy_pointer = absolute_path_to_dyn_lib_file;
@@ -320,6 +329,7 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 				printf("%s\n", api_funcs.at(api_function_index, 0));
 			}
 			printf("%d\n", ++debug_counter);
+			conn_mem_temp->api.log_string("yoyoy i break?");
 			conn_mem_temp->api.set_log_file(dir_of_log_file);
 			printf("%d\n", ++debug_counter);
 		}
