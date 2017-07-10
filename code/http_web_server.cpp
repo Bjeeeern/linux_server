@@ -198,7 +198,6 @@ struct static_memory
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	//memory.api.pause_thread();
-	memory.api.log_string("i can update automatically!");
 
 	//TODO(bjorn): The os should provide a memwipe function and give the memory
 	//pre-wiped to the process.
@@ -269,7 +268,7 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 			command[0] = '\0';
 			append_to_string(command, "cd ");
 			append_to_string(command, memory.path_to_webroot);
-			append_to_string(command, "../code && make build");
+			append_to_string(command, "../code && make --silent build");
 			memory.api.execute_shell_command(command);
 			return;
 		}
