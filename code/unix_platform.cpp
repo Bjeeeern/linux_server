@@ -312,13 +312,15 @@ load_dyn_libs(string_matrix dll_filenames, string_matrix api_funcs,
 
 				conn_mem_temp->api_function_pointers[api_function_index] = 
 					dlsym(dyn_lib_handle, api_funcs.at(api_function_index, 0));
-
-				conn_mem_temp->dll_handle = dyn_lib_handle;
-				char *copy_pointer = absolute_path_to_dyn_lib_file;
-				char *dest_pointer = conn_mem_temp->dll_path;
-				while(*copy_pointer != '\0'){ *dest_pointer++ = *copy_pointer++; }
-				*dest_pointer = '\0';
 			}
+
+			conn_mem_temp->api.set_log_file(dir_of_log_file);
+
+			conn_mem_temp->dll_handle = dyn_lib_handle;
+			char *copy_pointer = absolute_path_to_dyn_lib_file;
+			char *dest_pointer = conn_mem_temp->dll_path;
+			while(*copy_pointer != '\0'){ *dest_pointer++ = *copy_pointer++; }
+			*dest_pointer = '\0';
 		}
 		else
 		{

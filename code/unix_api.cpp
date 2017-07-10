@@ -240,10 +240,11 @@ extern "C" PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 	append_to_string(script, " >> ");
 	append_to_string(script, global_log_output_file);
 
+	log_string("%s\n", script);
+
 	s32 status_code = system(script);
 	if(status_code == 0)
 	{
-		log_string("%s\n", script);
 		return true;
 	}
 
