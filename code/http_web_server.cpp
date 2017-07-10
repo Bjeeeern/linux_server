@@ -198,6 +198,7 @@ struct static_memory
 extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 {
 	//memory.api.pause_thread();
+	memory.api.log_string("i can update automatically!");
 
 	//TODO(bjorn): The os should provide a memwipe function and give the memory
 	//pre-wiped to the process.
