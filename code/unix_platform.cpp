@@ -456,6 +456,8 @@ main()
 
 	api_log_string("Dynamic libraries loaded.\n");
 
+	signal(SIGCHLD, SIG_IGN);
+
 	s32 socket_handle = socket(AF_INET, SOCK_STREAM, 0);
 	if(socket_handle == -1)
 	{

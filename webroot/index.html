@@ -1,9 +1,60 @@
 <html>
-    <head>
-        <meta charset='utf-8'/>
-        <script src="/nav.js"></script>
-        <link rel="stylesheet" href="/nav.css">
-    </head>
-    <body>
-    </body>
+	<head>
+		<meta charset='utf-8'/>
+		<base target="_blank">
+
+		<script
+src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script
+src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+		<script src="/language.js"></script>
+
+		<link rel="stylesheet" href="/nav.css">
+		<title>Portfolio Website</title>
+	</head>
+	<body>
+		<header class="top_section">
+			<div class="top_section_left_fill"></div>
+			<canvas class="top_section_right_canvas"></canvas>
+			<h1 lang="en" class="top_section_middle_text">Björn Strömberg</h1>
+			<h1 lang="jp" class="top_section_middle_text">ビョルン　ストロムベリ</h1>
+		</header>
+
+		<nav>
+			<select id="lang-switch">
+				<option value="en">English</option>
+				<option value="jp">日本語</option>
+			</select>
+		</nav>
+
+		<section>
+		</section>
+
+		<footer lang="en">
+			The hosting of this site's domain name is provided using <a
+				href="http://freedns.afraid.org/">Free DNS</a> <br>
+
+			I currently do not have a static IP address and as such have to tunnle
+			using <a href="https://ngrok.com/">ngrok</a> <br>
+
+			This web page is provided by a handwritten http server (<a
+				href="https://github.com/Bjeeeern/linux_server">source code</a>)
+			running on a <a
+				href"https://www.raspberrypi.org/products/raspberry-pi-3-model-b/">
+				Raspberry Pi 3 model B</a>
+		</footer>
+		<footer lang="jp">
+			このウェブサイトのドメーンネームは<a
+				href="http://freedns.afraid.org/">Free DNS</a>で提供します <br>
+
+			現在固定IPがなくて、代わりに<a
+				href="https://ngrok.com/">ngrok</a>を使ってトンネルを設定しています
+			<br>
+
+			このウェブページは自作のhttpサーバー（<a
+				href="https://github.com/Bjeeeern/linux_server">ソースコード</a>）で提供し、<a
+				href"https://www.raspberrypi.org/products/raspberry-pi-3-model-b/">
+			Raspberry Pi 3 model B</a>の上に実行の上にしています
+		</footer>
+	</body>
 </html>

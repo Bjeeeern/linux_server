@@ -1,0 +1,126 @@
+body 
+{
+    margin: 0px 0px 0px 0px;
+}
+
+.top_section
+{
+    width: auto;
+    width: 100%;
+    height: 10%;
+    min-height: 70px;
+    position: relative;
+    top: 0;
+    left: 0;
+}
+.top_section_empty_relative_div{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: table;
+}
+.top_section_left_fill{
+    width: 80%;
+    height: 100%;
+    background-color: black;
+    position: absolute;
+    z-index: -1;
+}
+.top_section_right_canvas{
+    width: 20%;
+    height: 200%;
+    left: 80%;
+    position: absolute;
+}
+.top_section_middle_text{
+    width: 100%;
+    margin: 0 0 0 0;
+    text-align: center;
+    font-size: 160%;
+    color: white;
+    display: table-cell;
+    vertical-align: middle;
+    transition: all 2s;
+}
+/*------------------- Navigation side-bar ----------------*/
+.page_content{
+    min-height: 85%;
+    min-width: 100%;
+
+    display: flex;
+    flex-flow: row wrap;
+}
+.nav {
+    position: relative;
+    line-height:30px;
+    width:15%;
+    margin-right: 2%;
+    padding:0.4% 0px 0.4% 0.4%;
+
+    order: 1;
+}
+.nav_button_shadow {
+    background-color:#eee;
+    display: inline-block;
+    vertical-align: middle;
+    transform: translateZ(0);
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+    backface-visibility: hidden;
+    transition-duration: 0.3s;
+    transition-property: box-shadow, transform;
+
+    width: 110%;
+    padding-left:10%;
+    position:relative;
+
+}
+.nav_button_popout {
+    position:absolute;
+    transition-duration: 0.3s;
+    transition-property: transform;
+    width:0;
+    height:0;
+    top:0;
+    left:0;
+    display:none;
+    padding:6px;
+    background-color:#ccc;
+}
+.nav_button_shadow:hover {
+    box-shadow: 0 10px 10px -10px rgba(0, 0, 0, 0.5);
+    transform: scale(1.2);
+    z-index:2;
+}
+.nav_button_shadow:hover .nav_button_popout{
+    width:60%;
+    height:300%;
+    top:-100%;
+    left:100%;
+    display:block;
+}
+.nav_bg{
+    position: absolute;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    background-color:#ddd;
+    transition: all 0.3s;
+}
+.nav_button_shadow-hover-nav_bg{
+    width: 120%;
+}
+.main{
+    min-height: 85%;
+    width: 82.6%;
+    order: 2;
+}
+.footer {
+    background-color:black;
+    color:white;
+    clear:both;
+    text-align:center;
+    bottom:0;
+    height: 5%;
+    width:100%;
+}
