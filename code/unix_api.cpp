@@ -120,38 +120,34 @@ extern "C" PLATFORM_OPEN_FILE(open_file)
 	struct stat file_stats;
 
 	file_handle = open(file_path, O_RDONLY);
-	if(file_handle != -1)
+	if(file_handle == -1)
 	{
-		fstat(file_handle, &file_stats);
-		result.total_file_size = file_stats.st_size;
-		result.content = load_location;
-		result.file_path = file_path;
-
-		if(result.total_file_size <= maximum_page_size)
-		{
-			result.content_size = result.total_file_size;
-		}
-		else
-		{
-			result.there_is_more_content = true;
-
-			result.content_size = maximum_page_size;
-		}
-		void *temp_file = mmap(0, result.content_size, 
-													 PROT_READ, MAP_PRIVATE, file_handle, 0);
-		memcpy(result.content, temp_file, result.content_size);
-		munmap(temp_file, result.content_size);
-
+		log_string("open_file()\nCould not find file [%s]\n", file_path);
+		log_string("%s\n", strerror(errno));
 		return result;
+	}
+
+	fstat(file_handle, &file_stats);
+	result.total_file_size = file_stats.st_size;
+	result.content = load_location;
+	result.file_path = file_path;
+
+	if(result.total_file_size <= maximum_page_size)
+	{
+		result.content_size = result.total_file_size;
 	}
 	else
 	{
-		log_string("open_file()\n");
-		log_string("Could not find file [");
-		log_string(file_path);
-		log_string("]\n");
-		return result;
+		result.there_is_more_content = true;
+
+		result.content_size = maximum_page_size;
 	}
+	void *temp_file = mmap(0, result.content_size, 
+												 PROT_READ, MAP_PRIVATE, file_handle, 0);
+	memcpy(result.content, temp_file, result.content_size);
+	munmap(temp_file, result.content_size);
+
+	return result;
 }
 
 extern "C" PLATFORM_GET_NEXT_PART_OF_FILE(get_next_part_of_file)
