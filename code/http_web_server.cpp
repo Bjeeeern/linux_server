@@ -124,6 +124,31 @@ path_is_a_directory(char *header)
 	return header[-1] == '/';
 }
 
+internal_function b32
+file_is_blank(char *header)
+{
+	while(*header++ != ' '){}
+	while(not_end_of_url(header[0]))
+	{
+		++header;
+	}
+	while(header[0] != '/')
+	{
+		--header;
+	}
+
+	while(not_end_of_url(header[0]))
+	{
+		++header;
+
+		if(header[0] == '.')
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 internal_function void
 append_path_to_string(char *string, char *header)
 {
@@ -279,10 +304,16 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 
 			if(path_is_a_directory(header))
 			{
+				append_path_to_string(stat_mem->path, header);
 				append_to_string(stat_mem->path, "index.html");
 			}
 			else if(path_containts_either_file_ending(header, ".html .js .css .ico "
-																								".png .jpg .jpeg"))
+																								".png .jpg .jpeg .gif .json "
+																								".unityweb"))
+			{
+				append_path_to_string(stat_mem->path, header);
+			}
+			else if(file_is_blank(header))
 			{
 				append_path_to_string(stat_mem->path, header);
 			}
@@ -345,6 +376,21 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 				else if(path_containts_either_file_ending(header, ".jpg .jpeg"))
 				{
 					append_to_string(header_out, "Content-Type: image/jpeg\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".gif"))
+				{
+					append_to_string(header_out, "Content-Type: image/gif\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".json"))
+				{
+					append_to_string(header_out, "Content-Type: application/json\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".unityweb"))
+				{
+					append_to_string(header_out, "Content-Type: application/vnd.unity\r\n");
+				}
+				else if(file_is_blank(header))
+				{
 				}
 				else
 				{

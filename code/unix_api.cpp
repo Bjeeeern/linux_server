@@ -112,6 +112,7 @@ extern "C" PLATFORM_GET_LAST_EDIT_TIMESTAMP(get_last_edit_timestamp)
 	}
 }
 
+//TODO(bjorn): Handle opening of empty files that exists.
 extern "C" PLATFORM_OPEN_FILE(open_file)
 {
 	loaded_file result = {};
