@@ -37,60 +37,66 @@ src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.mi
 			<div class="middle_div"> 
 
 				<img id="img_article_1" src="/data/server.jpg" class="article_img">
-				<img id="img_article_2" src="/data/game.jpg" class="article_img">
-				<img id="img_article_3" src="/data/demo.gif" class="article_img">
+				<img id="img_article_2" src="/data/demo.jpg" class="article_img">
+				<img id="img_article_3" src="/data/game.jpg" class="article_img">
 
-				<img id="default_article_img" src="/data/default.jpg" class="article_img">
+				<img id="default_article_img" class="article_img">
 
 				<nav class="middle_flex_parent"> 
 					<div id="img_article_1" class="article_flex_wrapper"> 
-						<article id="img_article_1" itemprop="text">
-							<br>
-							<h2>handmade</h2> 
-							<p><a href="https://handmadehero.org/">Handmade hero</a> 
-							と言うWEBシリーズを見ながら、自分の各OSゲームエンジン開発してます。</p>
-							<p>現在はWINDOWS側のプラットフォームが完成していて、
-							ゲームエンジン本体の機能が開発中です。</p> 
-							<p>今、プラットフォームに含めてる機能は以下。</p> 
-							<ul> 
-								<li>ゲーム実行中のコンパイル、リロード　
-									（スクリプト言語のように）</li> 
-								<li>ゲームとまた別のゲームの即席的な切り替え</li> 
-								<li>ゲーマーの入力記録／再生　
-									（ゲーム内の状況をデーバッグしながら、その状況をループできる）</li> 
-								<li>固定のメモリーのスペック</li> 
-							</ul> 
+						<article lang="jp" id="img_article_1" itemprop="text">
+							<h2>サーバー</h2>
+							<p>この自作HTTPサーバーはRASPBERRY PI 3 MODEL Bで実行させ、
+							<a href="http://seyama.se">seyama.se</a> をホストします。
+							ホームサーバーなので、WANipもない状況で
+							<a href="https://ngrok.com/">ngrok</a>を使ってホーストします。
+							DNSサーバーは
+							<a href="http://freedns.afraid.org">freedns</a>を使って、ドメイン名は
+							<a href="https://www.loopia.se/">loopia</a>から借りています。
+							現在まだ作成中ですが、これまでに約二ヶ月かかりました。</p>
+							<h4>webサイトについて</h4>
+							<p>Portfolioとして使っています。</p> 
+							<h4>サーバーについて</h4>
+				
+							<p>メインプロセスはメモリーを漏らず、
+							OS側APIのDLLとプロトコルごとのDLLをロード、
+							リロードするだけです。こうしますと、
+							サーバーを更新する時に再起動しなくてもアップデートできます。</p>
+							<p>OS側APIのunix_api.cppは
+							それぞれのOSから求めてる機能を定義しています。</p> 
+							<p>サーバーはseyama.seにくる全てのTCPメッセージに
+							当てるプロトコルモジュールを見つけて、
+							そのモジュールに1MBを与えてフォークします。
+							TCP接続が終わるとそのプロセスと与えられたメモリーも
+							自動的にOSに解放される。</p>
+							<p>例えばgithub_webhook.cppはあるHTTPプロトコルモジュールで、
+							"POST /github-push-event"という形のメッセージだけを受け取って、
+							本repositoryが更新する時にそれをダウンロードして、
+							サーバーの新しいコードを再コンパイルします。</p>
 						</article>
 					</div>
 
 					<div id="img_article_2" class="article_flex_wrapper"> 
-						<article id="img_article_2" itemprop="text">
-							<br>
-							<h2>handmade</h2> 
-							<p><a href="https://handmadehero.org/">Handmade hero</a> 
-							と言うWEBシリーズを見ながら、自分の各OSゲームエンジン開発してます。</p>
-							<p>現在はWINDOWS側のプラットフォームが完成していて、
-							ゲームエンジン本体の機能が開発中です。</p> 
-							<p>今、プラットフォームに含めてる機能は以下。</p> 
-							<ul> 
-								<li>ゲーム実行中のコンパイル、リロード　
-									（スクリプト言語のように）</li> 
-								<li>ゲームとまた別のゲームの即席的な切り替え</li> 
-								<li>ゲーマーの入力記録／再生　
-									（ゲーム内の状況をデーバッグしながら、その状況をループできる）</li> 
-								<li>固定のメモリーのスペック</li> 
-							</ul> 
+						<article lang="jp" id="img_article_2" itemprop="text">
+							<h2>Augmented Reality デモ</h2> 
+							<p>この
+							<a href="http://journal.info.unlp.edu.ar/
+								wp-content/uploads/JCST-Oct05-3.pdf">文献</a>を参考にしたデモです。
+							画像のピクセルを勾配値に計算して、そうすることで出てくる輪郭を、
+							顔の左右として推測しました。
+							勾配画像の明るさと輪郭位置の揺れで人の動きを感知し、
+							音楽を調節できます。制作には五日間かかりました。</p> 
 						</article>
 					</div>
 
 					<div id="img_article_3" class="article_flex_wrapper"> 
-						<article id="img_article_3" itemprop="text">
+						<article lang="jp" id="img_article_3" itemprop="text">
 							<br>
-							<h2>handmade</h2> 
+							<h2>手作りゲーム</h2> 
 							<p><a href="https://handmadehero.org/">Handmade hero</a> 
 							と言うWEBシリーズを見ながら、自分の各OSゲームエンジン開発してます。</p>
 							<p>現在はWINDOWS側のプラットフォームが完成していて、
-							ゲームエンジン本体の機能が開発中です。</p> 
+							ゲームエンジン本体の機能が開発中です。約六ヶ月かかりました。</p> 
 							<p>今、プラットフォームに含めてる機能は以下。</p> 
 							<ul> 
 								<li>ゲーム実行中のコンパイル、リロード　
