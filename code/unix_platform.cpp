@@ -15,6 +15,13 @@
 // be distributed to. Maybe a single read and write and multiple read - style
 // for a single port.
 //
+// Add a compilation step for browser-wide compability of css/html/js code.
+//
+// IMPORTANT TODO
+//
+// There seems to be some weird bug where chrome on refreshing 2-4 times sends
+// a request that doesn't reach the server. Is this something that bugs on the
+// socket side?
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -651,6 +658,9 @@ main()
 					{
 						message_was_not_handled = false;
 
+						dlopen(connection_memory_template.dll_path, RTLD_NOW);
+						dlopen(protocol.dll_path, RTLD_NOW);
+
 						s32 pid = fork();
 
 						if(pid == 0)
@@ -667,17 +677,6 @@ main()
 																		PROT_READ|PROT_WRITE, 
 																		MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-							void *dll_handle = dlopen(memory.dll_path, RTLD_NOW);
-
-							for(s32 protocol_index = 0;
-									protocol_index < protocol_count;
-									++protocol_index)
-							{
-								protocol_api protocol = protocols[protocol_index];
-
-								void *dll_handle = dlopen(protocol.dll_path, RTLD_NOW);
-							}
-
 							//NOTE(bjorn): For thread debugging purposes.
 							//kill(pid, SIGSTOP);
 
@@ -691,13 +690,7 @@ main()
 							// protocol per connection so that it is a 1-to-1 conversation
 							// seen from the clients perspective.
 
-							for(s32 protocol_index = 0;
-									protocol_index < protocol_count;
-									++protocol_index)
-							{
-								dlclose(protocols[protocol_index].dll_handle);
-
-							}
+							dlclose(protocol.dll_handle);
 							dlclose(memory.dll_handle);
 
 							api_log_string("Connection ended\n");
@@ -709,6 +702,7 @@ main()
 						break;
 					}
 				}
+
 				if(message_was_not_handled)
 				{
 					api_log_string("No fitting protocol was found\n");
@@ -716,6 +710,7 @@ main()
 
 					close(client_socket_handle);
 				}
+
 				munmap(load_location, bytes_waiting);
 			}
 		}
