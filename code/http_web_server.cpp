@@ -244,6 +244,7 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 
 	b32 wait_for_response = true;
 	f32 seconds_waited = 0.0f;
+	s32 lives_left = 4;
 	while(wait_for_response)
 	{
 		s32 bytes_in_queue = memory.api.bytes_in_connection_queue(connection_id);
@@ -252,7 +253,7 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 			memory.api.sleep_x_seconds(1.0f/60.0f);
 			seconds_waited += 1.0f/60.0f;
 
-			if(seconds_waited > 10.0f)
+			if(seconds_waited > 5.0f)
 			{
 				//TODO(bjorn): Respond with 408 Request Timeout before quitting.
 				return;
@@ -342,9 +343,10 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 
 				append_to_string(header_out, "\r\n");
 
-				if(header_field_is(header, "connection", "keep-alive"))
+				if(header_field_is(header, "connection", "keep-alive") && lives_left)
 				{
 					append_to_string(header_out, "Connection: keep-alive\r\n");
+					--lives_left;
 				}
 				else
 				{
