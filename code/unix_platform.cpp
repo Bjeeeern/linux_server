@@ -45,7 +45,6 @@
 
 
 #define BUFFER_SIZE Kilobytes(64)
-#define SIMULTANEOUS_CONNECTIONS 16
 #define MEMORY_PER_THREAD Megabytes(1)
 
 struct protocol_api
@@ -491,7 +490,7 @@ main()
 		return 2;
 	}
 
-	if(listen(socket_handle, SIMULTANEOUS_CONNECTIONS) != 0)
+	if(listen(socket_handle, SOMAXCONN) != 0)
 	{
 		api_log_string("Can not listen to socket for simultaneous connections.\n");
 		return 2;
