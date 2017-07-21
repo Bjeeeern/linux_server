@@ -716,6 +716,7 @@ main()
 
 					close(client_socket_handle);
 				}
+				munmap(load_location, bytes_waiting);
 			}
 		}
 	}
