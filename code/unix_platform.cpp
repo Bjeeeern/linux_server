@@ -481,7 +481,7 @@ main()
 	struct sockaddr_in address = {};
 	//TODO(bjorn): Read this from a settings text file.
 	address.sin_family = AF_INET;
-	address.sin_port = htons(8000);
+	address.sin_port = htons(80);
 	address.sin_addr.s_addr = INADDR_ANY;
 
 	if(bind(socket_handle, (struct sockaddr *)&address, sizeof(address)) != 0)

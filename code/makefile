@@ -12,8 +12,8 @@ build: FORCE
 		sed '/struct platform_api/ d' | \
 		sed '/{/ d' | \
 		sed '/};/ d' > ../build/platform_api_names_in_order.txt
-	gcc -g $(ignored_warnings) -c http_web_server.cpp -o ../build/http_web_server.o
-	gcc -g $(ignored_warnings) -c unix_api.cpp -o ../build/unix_api.o
+	gcc -g $(ignored_warnings) -c http_web_server.cpp -o ../build/http_web_server.o -fPIC
+	gcc -g $(ignored_warnings) -c unix_api.cpp -o ../build/unix_api.o -fPIC
 	gcc -g -shared -o ../build/http_web_server$(RANDOM).temp \
 		../build/http_web_server.o -lm 
 	#IMPORTANT(bjorn): The lib_unix_api.so is guaranteed to exist and the server
