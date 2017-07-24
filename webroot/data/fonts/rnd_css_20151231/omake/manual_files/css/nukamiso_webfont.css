@@ -11,12 +11,13 @@
 フォント使用許諾条件に同意しない転用と再配布を禁じます。
 --------------------------------------------------------
 */
-
-@font-face{
-font-family:"web_nukamiso";
-src:url(../../nukamiso__beta09.ttf) format('truetype');
-}
-@font-face{
-font-family:"web_nukamisoOTF";
-src:url(../../nukamiso_otf_beta09.otf) format('opentype');
+@font-face
+{
+	font-family:"web_nukamiso";
+	src: url('../../nukamiso__beta09.eot');
+	src: url('../../nukamiso__beta09.eot?#iefix') format('embedded-opentype'), 
+	url(../../nukamiso__beta09.woff2) format('woff2'),
+	url(../../nukamiso__beta09.woff) format('woff'),
+	url(../../nukamiso__beta09.ttf) format('truetype'),
+	url(../../nukamiso__beta09.otf) format('opentype');
 }
