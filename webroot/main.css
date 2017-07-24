@@ -1,6 +1,12 @@
 body 
 {
 	margin: 0px;
+	font-family: "Courier New", Courier, monospace; 
+}
+
+:lang(jp)
+{
+	font-family: "web_nukamisoOTF", "web_nukamiso", monospace;
 }
 
 footer

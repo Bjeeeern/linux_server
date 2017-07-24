@@ -1,0 +1,22 @@
+@charset "UTF-8";
+
+/* 2010-12-05 */
+
+/*  ぬかみそwebフォント  */
+
+/*
+--------------------------------------------------------
+ウェブフォントは、フォント使用許諾契約に基き、
+当該文書を装飾する目的で使用しています。
+フォント使用許諾条件に同意しない転用と再配布を禁じます。
+--------------------------------------------------------
+*/
+
+@font-face{
+font-family:"web_nukamiso";
+src:url(../../nukamiso__beta09.ttf) format('truetype');
+}
+@font-face{
+font-family:"web_nukamisoOTF";
+src:url(../../nukamiso_otf_beta09.otf) format('opentype');
+}

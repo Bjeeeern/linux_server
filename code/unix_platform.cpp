@@ -22,6 +22,10 @@
 // There seems to be some weird bug where chrome on refreshing 2-4 times sends
 // a request that doesn't reach the server. Is this something that bugs on the
 // socket side?
+//
+// Changed the unix api code so that messages are always sent, but this messed
+// up sending the demo.gif and now it doesn't even send a single byte. Getting
+// harier!
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>

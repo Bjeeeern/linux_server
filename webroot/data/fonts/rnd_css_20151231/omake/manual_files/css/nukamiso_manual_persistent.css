@@ -1,0 +1,53 @@
+@charset "UTF-8";
+
+/* 2008-01-10 */
+
+/* ぬかみそフォント共通 永続CSS */
+
+
+
+/* CSSで消去するコメント */
+.comment{
+display: none !important;
+}
+
+
+/* 半角バックスラッシュフォント指定 */
+
+.backslash{
+font-family: 'Arial','DejaVu Sans Mono','Bitstream Vera Sans Mono','nukamiso','web_nukamiso' !important;
+}
+
+
+/* 迷惑メールフィルタ */
+div#footer span.spam_filter{
+display: none !important;
+}
+
+/* --------------- 入力テスト ----------------- */
+div#korper div.nukamiso_input_test textarea{
+font-family: 'nukamiso','web_nukamiso';
+font-size: 28px;
+width: 50%;
+height: 5em;
+}
+
+
+
+
+
+
+
+/* 印刷に邪魔 */
+@media print{
+.no_print{
+display: none !important;
+}
+}
+
+
+
+
+
+
+

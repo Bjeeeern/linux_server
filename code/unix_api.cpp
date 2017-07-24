@@ -261,7 +261,21 @@ extern "C" PLATFORM_EXECUTE_SHELL_COMMAND(execute_shell_command)
 
 extern "C" PLATFORM_WRITE_TO_CONNECTION(write_to_connection)
 {
-	write(connection_id, source, bytes_to_send);
+	s32 bytes_written = write(connection_id, source, bytes_to_send);
+
+	if(bytes_written == -1)
+	{
+		log_string("write_to_connection()\n");
+		log_string("Error when trying to write to connection id:%d\n", connection_id);
+		return;
+	}
+
+	s32 bytes_left = bytes_to_send - bytes_written;
+	while(bytes_left)
+	{
+		bytes_written = write(connection_id, source, bytes_left);
+		bytes_left -= bytes_written;
+	}
 }
 
 extern "C" PLATFORM_READ_FROM_CONNECTION(read_from_connection)
@@ -269,7 +283,7 @@ extern "C" PLATFORM_READ_FROM_CONNECTION(read_from_connection)
 	s32 bytes_read = recv(connection_id, load_location, bytes_to_read, 0);
 	if(bytes_read < bytes_to_read)
 	{
-		log_string("get_next_part_of_file()\n");
+		log_string("read_from_connection()\n");
 		log_string("less bytes where collected than expected\n");
 	}
 }

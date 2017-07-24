@@ -1,0 +1,159 @@
+@charset "UTF-8";
+
+/* 2007-12-10 */
+
+/*  ぬかみそフォントで印刷  */
+
+
+/* ###################### 初期化 ########################### */
+
+*{
+font-weight: normal;
+font-style: normal;
+text-decoration: none;
+margin: 0;
+padding: 0;
+line-height: 1;
+}
+*{
+font-weight: inherit;
+font-style: inherit;
+text-decoration: inherit;
+}
+b{font-weight: bold;}
+i{font-style: italic;}
+u{text-decoration: underline;}
+s,del{text-decoration: line-through;}
+kbd,pre,code,tt{font-size: medium;}
+
+/* ######################### 初期化ここまで ################## */
+
+/* ======== 印刷用初期化 ==================== */
+
+/* 色は排除 */
+*{
+color: #000000;
+background-color: #ffffff;
+}
+/* 印刷に邪魔 */
+.no_print{
+display: none;
+}
+/* フォント指定 */
+body *{
+font-family: nukamiso !important;
+}
+
+/* ############# 印刷非適用 ########################### */
+
+@media screen,tv,projection{
+
+/* ========= 印刷用注意表示 ==================== */
+head{
+display: block;
+}
+head:after{
+display: block;
+position: fixed;
+width: 100%;
+padding: 0.5em 0 0.5em 0;
+content: '\003000\00300e\00306c\00304b\00307f\00305d\0030d5\0030a9\0030f3\0030c8\00300f\003067\005370\005237\003059\00308b\00306b\00306f\003001\0030d5\0030a9\0030f3\0030c8\00306e\0030a4\0030f3\0030b9\0030c8\0030fc\0030eb\00304c\005fc5\008981\003067\003059';
+background-color: #333333;
+color: #ffffff;
+}
+body{
+margin-top: 2em;
+}
+
+/* あたかも紙であるかのような紛らわしさ */
+
+html{
+background-color: #666666;
+}
+body{
+margin: 3em 5%;
+padding: 2em 5%;
+border: 1px solid #000000;
+}
+}/* @media screen,tv,projectionここまで */
+
+
+
+/* ########### 印刷・非印刷 両適用 ################### */
+
+div#korper h1{
+font-size: 160%;
+text-align: center;
+border: 1px solid #000000;
+border-width: 1px 1em;
+margin: 0 0 0.5em 0;
+padding: 0.5em 0;
+}
+
+
+
+div#korper h2,
+div#footer h1{
+font-size: 120%;
+margin: 1em 0 0.5em 0;
+padding: 0.3em 1em;
+border: 1px solid #000000;
+border-width: 1px 1px 1px 1em;
+}
+
+
+
+p{
+text-indent: 1em;
+line-height: 1.2;
+}
+
+
+dl.note dt{
+display: none;
+}
+dl.note{
+margin: 0.5em 0 0.5em 0;
+padding: 0.5em;
+border: 1px dotted #000000;
+font-size: 80%;
+}
+
+ul.list,
+ol.list{
+margin: 0.5em 0 0.5em 1.5em;
+}
+
+table{
+border-collapse: collapse;
+empty-cells: show;
+}
+table caption{
+display: none;
+}
+table th,table td{
+padding: 0.1em;
+}
+table,table th, table td{
+border: 1px solid #000000;
+}
+
+
+dl.character_list dt,
+div#footer dt{
+display: list-item;
+list-style-type: square;
+list-style-position: inside;
+margin: 0.5em 0 0 0;
+}
+dl.character_list dd,
+div#footer dd{
+margin: 0 0 0 1em;
+
+}
+
+
+
+
+
+

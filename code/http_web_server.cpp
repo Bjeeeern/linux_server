@@ -310,7 +310,7 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 			}
 			else if(path_containts_either_file_ending(header, ".html .js .css .ico "
 																								".png .jpg .jpeg .gif .json "
-																								".unityweb"))
+																								".unityweb .ttf .otf .woff"))
 			{
 				append_path_to_string(stat_mem->path, header);
 			}
@@ -390,6 +390,20 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 				else if(path_containts_either_file_ending(header, ".unityweb"))
 				{
 					append_to_string(header_out, "Content-Type: application/vnd.unity\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".otf"))
+				{
+					append_to_string(header_out, 
+													 "Content-Type: application/x-font-opentype\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".ttf"))
+				{
+					append_to_string(header_out, 
+													 "Content-Type: application/x-font-truetype\r\n");
+				}
+				else if(path_containts_either_file_ending(header, ".woff"))
+				{
+					append_to_string(header_out, "Content-Type: application/font-woff\r\n");
 				}
 				else if(file_is_blank(header))
 				{

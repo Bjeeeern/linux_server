@@ -1,0 +1,31 @@
+@charset "UTF-8";
+/*
+###########################################################################
+
+         某ブラウザ物真似CSS ぬかみそフォントOTF説明書版
+
+###########################################################################
+*/
+
+@import url(./nukamiso_manual_edelweiss.css);
+@import url(./nukamiso_webfont.css);
+
+*{
+font-family: 'nukamisoOTF','web_nukamisoOTF',monospace !important;
+font-size: 28px !important;
+font-weight: normal !important;
+font-style: normal !important;
+line-height: 1.2 !important;
+letter-spacing: 2px !important;
+scrollbar-face-color: #CCCCCC !important;
+scrollbar-track-color: #666666 !important;
+scrollbar-arrow-color: #666666 !important;
+scrollbar-3dlight-color: #000000 !important;
+scrollbar-highlight-color: #000000 !important;
+scrollbar-shadow-color: #000000 !important;
+scrollbar-darkshadow-color: #000000 !important;
+writing-mode: lr-tb !important;
+}
+br{
+letter-spacing:0 !important;
+}
