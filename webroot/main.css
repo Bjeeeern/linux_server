@@ -4,6 +4,16 @@ body
 	font-family: "Courier New", Courier, monospace; 
 }
 
+@font-face
+{
+	font-family:"web_nukamiso";
+	src: url('data/fonts/nukamiso.eot');
+	src: url('data/fonts/nukamiso.eot?#iefix') format('embedded-opentype'), 
+	url(data/fonts/nukamiso.woff2) format('woff2'),
+	url(data/fonts/nukamiso.woff) format('woff'),
+	url(data/fonts/nukamiso.ttf) format('truetype'),
+	url(data/fonts/nukamiso.otf) format('opentype');
+}
 :lang(jp)
 {
 	font-family: "web_nukamiso", monospace;

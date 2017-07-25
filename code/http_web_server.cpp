@@ -412,7 +412,8 @@ extern "C" SERVER_HANDLE_CONNECTION(handle_connection)
 				}
 				else if(path_containts_either_file_ending(header, ".eot"))
 				{
-					append_to_string(header_out, "Content-Type: application/font-eot\r\n");
+					append_to_string(header_out, 
+													 "Content-Type: application/vnd.ms-fontobject\r\n");
 				}
 				else if(file_is_blank(header))
 				{
