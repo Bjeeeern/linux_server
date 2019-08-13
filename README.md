@@ -1,20 +1,17 @@
 # linux_server
-この自作HTTPサーバーはRASPBERRY PI 3 MODEL Bで実行させ、http://seyama.se をホストします。
+Denna HTTP server kördes på en RASPBERRY PI 3 MODEL B med adressen http://seyama.se men är för tillfället nere.
 
-ホームサーバーなので、WANipもない状況でngrokを使ってホーストします。（ https://ngrok.com/ ） <br />
-DNSサーバーはfreedns( http://freedns.afraid.org )を使って、ドメイン名はloopia（ https://www.loopia.se/ ）から借りています。
+Det var en hemserver utan WANip så jag använde ngrok(https://ngrok.com/) för att hosta. <br/>
+Freedns(http://freedns.afraid.org) var min DNS server och domännamnet var köppt av loopia(https://www.loopia.se/)
 
-## webサイトについて ##
+## om web sidan ##
 
-Portfolioとして使っているつもりです。
+Användes som min portfolio
 
+## Om servern ##
 
-## サーバーについて ##
+Servern består av en core loop som laddar flera DLL moduler och laddar om dem om den hittar en nyare verision efter omkompilering.
 
-メインプロセスはメモリーを漏らず、OS側APIのDLLとプロトコルごとのDLLをロード、リロードするだけです。　こうしますと、サーバーを更新する時に再起動しなくてもアップデートできます。
+När en TCP connection kommer in till servern så beroende på medelandet så forkar serven en motsvarande modul med 1mb tillgodo. När uppkopplingen avbryts eller avslutas så avslutas processen och det tilldelade minnet returneras.
 
-OS側APIのunix_api.cppはそれぞれのOSから求めてる機能を定義しています。
-
-サーバーはseyama.seにくる全てのTCPメッセージに当てるプロトコルモジュールを見つけて、そのモジュールに1MBを与えてフォークします。TCP接続が終わるとそのプロセスと与えられたメモリーも自動的にOSに解放される。
-
-例えばgithub_webhook.cppはあるHTTPプロトコルモジュールで、"POST /github-push-event"という形のメッセージだけを受け取って、本repositoryが更新する時にそれをダウンロードして、サーバーの新しいコードを再コンパイルします。
+T.ex. github_webhook.cpp beskriver en HTTP modul som svarar på medelande med formen "POST /github-push-event" som skickas när detta repository har uppdaterats. Då laddar den ner den senaste verisionen och omkompilerar och laddar om hela servern lokalt.
